@@ -30,7 +30,7 @@ export default function SignUp() {
       const user = userCredential.user;
 
       // Store user details in Firestore
-      await setDoc(doc(collection(db, "users"), user.uid), {
+      await setDoc(doc(collection(db, "users", user.uid, "userInfo"), "profile"), {
         accountNumber,
         email,
         mobile,
@@ -38,7 +38,7 @@ export default function SignUp() {
       });
 
       Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.push("/fp") } // Navigate to 'fp' screen
+        { text: "OK", onPress: () => router.push("./index") } // Navigate to 'fp' screen
       ]);
     } catch (error) {
       Alert.alert("Signup Failed", error instanceof Error ? error.message : "An unknown error occurred.");
