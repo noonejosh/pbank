@@ -12,33 +12,34 @@ import {
   Image,
   Alert
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter, Link } from "expo-router"; 
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../FirebaseConfig"; // Ensure correct Firebase import
-
+import { auth } from "../../FirebaseConfig"; // Import Firebase auth instance
 
 export default function Login() {
   const router = useRouter(); // Initialize router for navigation
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Function to handle login
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter your email and password.");
       return;
     }
 
+    // Print email and password to the console
+    console.log("Email:", email);
+    console.log("Password:", password);
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Logged in successfully!");
-      router.push("./paybills"); // Navigate to home screen after login
+      router.push("./homepage"); // Navigate to home screen after login
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }
   };
-  
     return (
+      
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "padding"} 
         style={styles.container}
@@ -48,23 +49,23 @@ export default function Login() {
             <Text style={styles.subtitle}>Welcome Back!</Text>
 
             <Image 
-            source={require("../assets/images/D2.png")}
+            source={require("../../assets/images/D2.png")}
             style={{ position: "absolute", right: -250, top: -350, width: 700, height: 375}} 
             />
              <Image 
-            source={require("../assets/images/logo.png")}
+            source={require("../../assets/images/logo.png")}
             style={{ position: "absolute", left: 80, top: -120, width: 200, height: 80, borderRadius: 50 }} 
             />
             <Image 
-            source={require("../assets/images/D3.png")}
+            source={require("../../assets/images/D3.png")}
             style={{ position: "absolute", right: -40, top: 300, width: 120, height: 120}} 
             />
             <Image 
-            source={require("../assets/images/D3.png")}
+            source={require("../../assets/images/D3.png")}
             style={{ position: "absolute", right: -20, top: 280, width: 120, height: 120}} 
             />
             <Image 
-            source={require("../assets/images/D3.png")}
+            source={require("../../assets/images/D3.png")}
             style={{ position: "absolute", right: -50, top: 340, width: 140, height: 140}} 
             />
 
@@ -73,9 +74,11 @@ export default function Login() {
         
             <TextInput
               style={styles.input}
-              placeholder="Account Number"
+              placeholder="email"
               placeholderTextColor="gray"
-              keyboardType="numeric"
+              keyboardType="email-address"
+              value={email} // Bind to email state
+              onChangeText={setEmail} // Update email state
             />
   
             <TextInput
@@ -83,14 +86,16 @@ export default function Login() {
               placeholder="Password"
               placeholderTextColor="gray"
               secureTextEntry
+              value={password} // Bind to password state
+              onChangeText={setPassword} // Update password state
             />
 
             
-            <Link href="./fp" style={styles.forgotPassword}>Forgot Password?</Link>
-            <Link href="./signup" style={styles.signup}>Create Account</Link>
+            <Link href="/fp" style={styles.forgotPassword}>Forgot Password?</Link>
+            <Link href="/signup" style={styles.signup}>Create Account</Link>
   
-            <Pressable style={styles.button} onPress={() => router.push("./paybills")}>
-              <Text style={styles.buttonText}>Log In</Text>
+            <Pressable style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Log In</Text>
             </Pressable>
   
           </View>

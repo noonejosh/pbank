@@ -4,7 +4,7 @@ import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { collection, doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../FirebaseConfig"; // Ensure auth and db are exported from FirebaseConfig
+import { auth, db } from "../../FirebaseConfig"; // Ensure auth and db are exported from FirebaseConfig
 import { useRouter } from "expo-router";
 
 export default function SignUp() {

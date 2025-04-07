@@ -44,7 +44,7 @@ const BillsPayment = () => {
       </View>
 
       {/* Logo */}
-      <Image source={require("../assets/images/logo.png")} style={styles.logo} />
+      <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
 
       {/* Input Fields */}
       <View style={styles.inputContainer}>

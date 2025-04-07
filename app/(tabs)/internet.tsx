@@ -8,15 +8,16 @@ interface Provider {
   logo: any;
 }
 
-const WaterUtilityScreen = () => {
+const InternetScreen = () => {
   const router = useRouter();
 
   const providers: Provider[] = [
-    { name: 'Angat Water District', logo: require('../assets/images/angatwater.jpg') }, 
-    { name: 'Basic Water Enterprises, Inc', logo: require('../assets/images/basicwater.jpg') }, 
-    { name: 'Manila Water', logo: require('../assets/images/manilawater.jpg') }, 
-    { name: 'Maynilad', logo: require('../assets/images/maynilad.jpg') }, 
-    { name: 'PrimeWater', logo: require('../assets/images/primewater.jpg') },
+    { name: 'PLDT Home', logo: require('../../assets/images/pldt.jpg') },
+    { name: 'Globe Telecom', logo: require('../../assets/images/globe.jpg') },
+    { name: 'Converge ICT', logo: require('../../assets/images/converge.jpg') },
+    { name: 'DITO Telecommunity', logo: require('../../assets/images/dito.jpg') },
+    { name: 'Sky Fiber', logo: require('../../assets/images/skyfiber.jpg') },
+    { name: 'Red Fiber', logo: require('../../assets/images/redfiber.jpg') },
   ];
 
   const handleProviderPress = (providerName: string) => {
@@ -33,7 +34,7 @@ const WaterUtilityScreen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Water Utility</Text>
+        <Text style={styles.headerTitle}>Internet</Text>
         <View style={styles.backButtonPlaceholder} />
       </View>
 
@@ -115,4 +116,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WaterUtilityScreen;
+export default InternetScreen;

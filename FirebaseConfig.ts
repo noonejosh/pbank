@@ -1,9 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { 
-  getAuth, 
-  setPersistence, 
-  browserLocalPersistence 
-} from "firebase/auth";
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getFirestore } from "firebase/firestore";
 
@@ -22,11 +19,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // ✅ Get Firebase Auth instance
-const auth = getAuth(app);
-
-// ✅ Set persistence manually to avoid IndexedDB issue
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Failed to set persistence:", error);
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 
 // Firestore Database

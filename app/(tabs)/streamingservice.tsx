@@ -1,40 +1,38 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AntDesign } from '@expo/vector-icons'; // Import an icon for the back button
+import { AntDesign } from '@expo/vector-icons';
 
 interface Provider {
   name: string;
   logo: any;
 }
 
-const InternetScreen = () => {
+const StreamingServicesScreen = () => {
   const router = useRouter();
 
   const providers: Provider[] = [
-    { name: 'PLDT Home', logo: require('../assets/images/pldt.jpg') },
-    { name: 'Globe Telecom', logo: require('../assets/images/globe.jpg') },
-    { name: 'Converge ICT', logo: require('../assets/images/converge.jpg') },
-    { name: 'DITO Telecommunity', logo: require('../assets/images/dito.jpg') },
-    { name: 'Sky Fiber', logo: require('../assets/images/skyfiber.jpg') },
-    { name: 'Red Fiber', logo: require('../assets/images/redfiber.jpg') },
+    { name: 'Netflix', logo: require('../../assets/images/netflix.jpg') }, 
+    { name: 'iflix', logo: require('../../assets/images/iflix.jpg') }, 
+    { name: 'Prime Video', logo: require('../../assets/images/primevideo.jpg') },
+    { name: 'Disney+', logo: require('../../assets/images/disneyplus.jpg') },
+    { name: 'Vivamax', logo: require('../../assets/images/vivamax.png') },
   ];
 
   const handleProviderPress = (providerName: string) => {
     router.push({
-      pathname: '../BillsPayment', 
+      pathname: '../BillsPayment',
       params: { provider: providerName },
     });
   };
 
   return (
     <View style={styles.container}>
-      {/* Header with Centered Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Internet</Text>
+        <Text style={styles.headerTitle}>Streaming Services</Text>
         <View style={styles.backButtonPlaceholder} />
       </View>
 
@@ -116,4 +114,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InternetScreen;
+export default StreamingServicesScreen;

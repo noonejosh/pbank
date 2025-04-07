@@ -4,11 +4,11 @@ import { Link } from "expo-router";
 export default function PBANKHOME() {
   return <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "black"}}>
     <Image 
-  source={require("../assets/images/logo.png")}
+  source={require("../../assets/images/logo.png")}
   style={{ position: "absolute", left: 80, top: 100, width: 200, height: 80, borderRadius: 50 }} 
 />
 <Image 
-source={require("../assets/images/D1.png")}
+source={require("../../assets/images/D1.png")}
   style={{ position: "absolute", right: -60, top: 320, width: 650, height: 650}} 
 />
 <Text style={{ position: "absolute", left: 20, top: 260, color: "white", fontWeight:"bold" }}>Welcome To...</Text>

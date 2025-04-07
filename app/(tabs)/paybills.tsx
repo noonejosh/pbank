@@ -14,6 +14,30 @@ const PayBillsScreen = () => {
     router.push('/waterutility');
   };
 
+  const handleElectricPress = () => {
+    router.push('/electricutility');
+  };
+
+  const handleTransportationPress = () => {
+    router.push('/transportation');
+  };
+
+  const handleStreamingPress = () => {
+    router.push('/streamingservice');
+  };
+
+  const handleGameCreditsPress = () => {
+    router.push('/gamecredit');
+  };
+
+  const handleTvCableBillsPress = () => {
+    router.push('/cables');
+  };
+
+  const handleDirectSendPress = () => {
+    router.push('/BillsPayment');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -28,7 +52,7 @@ const PayBillsScreen = () => {
 
       <View style={styles.logoSection}>
         <Image
-          source={require('../assets/images/logo.png')}
+          source={require('../../assets/images/logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -42,7 +66,7 @@ const PayBillsScreen = () => {
             <Ionicons name="qr-code-outline" size={24} color="black" />
             <Text style={styles.actionButtonText}>Scan QR Code</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleDirectSendPress}>
             <Ionicons name="send" size={24} color="black" />
             <Text style={styles.actionButtonText}>Direct Send</Text>
           </TouchableOpacity>
@@ -57,13 +81,13 @@ const PayBillsScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.billsGrid}>
-          <TouchableOpacity style={styles.billItem}>
+          <TouchableOpacity style={styles.billItem} onPress={handleElectricPress}>
             <View style={styles.billIconContainer}>
               <Ionicons name="flash" size={24} color="black" />
             </View>
             <Text style={styles.billText}>Electricity</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.billItem}onPress={handleWaterPress}>
+          <TouchableOpacity style={styles.billItem} onPress={handleWaterPress}>
             <View style={styles.billIconContainer}>
               <Ionicons name="water" size={24} color="black" />
             </View>
@@ -75,25 +99,25 @@ const PayBillsScreen = () => {
             </View>
             <Text style={styles.billText}>Internet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.billItem}>
+          <TouchableOpacity style={styles.billItem} onPress={handleStreamingPress}>
             <View style={styles.billIconContainer}>
               <Ionicons name="settings-outline" size={24} color="black" />
             </View>
             <Text style={styles.billText}>Streaming Services</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.billItem}>
+          <TouchableOpacity style={styles.billItem} onPress={handleTvCableBillsPress}>
             <View style={styles.billIconContainer}>
-              <Ionicons name="cash" size={24} color="black" />
+              <Ionicons name="tv" size={24} color="black" />
             </View>
-            <Text style={styles.billText}>Mobile Postpaid</Text>
+            <Text style={styles.billText}>TV & Cable Bills</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.billItem}>
+          <TouchableOpacity style={styles.billItem} onPress={handleGameCreditsPress}>
             <View style={styles.billIconContainer}>
               <Ionicons name="game-controller" size={24} color="black" />
             </View>
             <Text style={styles.billText}>Gaming Credits</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.billItem}>
+          <TouchableOpacity style={styles.billItem} onPress={handleTransportationPress}>
             <View style={styles.billIconContainer}>
               <Ionicons name="bus" size={24} color="black" />
             </View>
@@ -213,3 +237,4 @@ const styles = StyleSheet.create({
 });
 
 export default PayBillsScreen;
+
