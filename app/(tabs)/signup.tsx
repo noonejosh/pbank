@@ -8,6 +8,7 @@ import { auth, db } from "../../FirebaseConfig"; // Ensure auth and db are expor
 import { useRouter } from "expo-router";
 
 export default function SignUp() {
+  const [name, setName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
@@ -15,11 +16,12 @@ export default function SignUp() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
+  const [deposit, setDeposit] = useState(0); // Initialize deposit state
 
   const router = useRouter(); // Initialize the router
 
   const handleSignUp = async () => {
-    if (!accountNumber || !email || !mobile || !password || !selectedMonth || !selectedDay || !selectedYear) {
+    if (!name || !accountNumber || !email || !mobile || !password || !selectedMonth || !selectedDay || !selectedYear) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
@@ -31,14 +33,17 @@ export default function SignUp() {
 
       // Store user details in Firestore
       await setDoc(doc(collection(db, "users", user.uid, "userInfo"), "profile"), {
+        name,
         accountNumber,
         email,
         mobile,
         dateOfBirth: `${selectedMonth} ${selectedDay}, ${selectedYear}`,
+        deposit,
+        createdAt: new Date().toISOString()
       });
 
       Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.push("./index") } // Navigate to 'fp' screen
+        { text: "OK", onPress: () => router.push("./index") } // Navigate to 'index' screen
       ]);
     } catch (error) {
       Alert.alert("Signup Failed", error instanceof Error ? error.message : "An unknown error occurred.");
@@ -57,6 +62,16 @@ export default function SignUp() {
       <Text style={styles.subtitle}>Hi there!</Text>
       <Text style={styles.heading}>Let’s Get Started</Text>
 
+      <View style={styles.inputContainer}>
+        <Ionicons name="card-outline" size={20} color="gray" style={styles.icon} />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Full Name" 
+          placeholderTextColor="gray"
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
       {/* Account Number Input */}
       <View style={styles.inputContainer}>
         <Ionicons name="card-outline" size={20} color="gray" style={styles.icon} />

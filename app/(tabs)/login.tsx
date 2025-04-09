@@ -20,6 +20,7 @@ export default function Login() {
   const router = useRouter(); // Initialize router for navigation
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter your email and password.");
@@ -31,9 +32,16 @@ export default function Login() {
     console.log("Password:", password);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       Alert.alert("Success", "Logged in successfully!");
-      router.push("./homepage"); // Navigate to home screen after login
+      console.log("User UID:", user.uid); // Print the user's UID to the console
+      router.push({
+        pathname: "./homepage",
+        params: { 
+          
+        }, // Pass the UID as query parameters
+      });
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }
@@ -74,7 +82,7 @@ export default function Login() {
         
             <TextInput
               style={styles.input}
-              placeholder="email"
+              placeholder="Email"
               placeholderTextColor="gray"
               keyboardType="email-address"
               value={email} // Bind to email state

@@ -1,9 +1,63 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router"; // Ensure you have expo-router installed
+import { Link, useLocalSearchParams } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
 const HomeScreen = () => {
+  const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
+  interface UserData {
+    name?: string;
+    accountNumber?: string;
+    deposit?: string;
+    email?: string;
+    mobile?: string;
+    dateOfBirth?: Date;
+    createdAt?: Date;
+  }
+  
+  const [userData, setUserData] = useState<UserData | null>(null); // State to store user data
+  const [loading, setLoading] = useState(true); // State to manage loading
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (typeof uid === "string") {
+        // Create the document reference with the uid in the path
+        const docRef = doc(db, "users", uid, "userInfo", "profile");
+
+        // Fetch the document
+        try {
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            console.log("Document data:", docSnap.data());
+            setUserData(docSnap.data()); // Update the state with fetched data
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching document: ", error);
+        } finally {
+          setLoading(false); // Stop loading after fetching
+        }
+      } else {
+        console.error("Invalid uid:", uid);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [uid]); // Run the effect when `uid` changes
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: "#CDFF57" }}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {/* Header */}
@@ -11,14 +65,14 @@ const HomeScreen = () => {
         <Text
           style={{
             color: "#CDFF57",
-            fontSize: 18,
+            fontSize: 13,
             fontWeight: "bold",
             position: "relative",
-            left: 100,
-            top: -5,
+            left: "20%",
+            top: "10%",
           }}
         >
-          Welcome Back!
+          Welcome Back, {userData?.name || "User"}!
         </Text>
         <Image
           source={require("../../assets/images/logo.png")}
@@ -64,10 +118,10 @@ const HomeScreen = () => {
         }}
       >
         <Text style={{ fontSize: 10, color: "#333", marginTop: 5 }}>
-          DEBIT ACCOUNT ******12345
+          DEBIT ACCOUNT ******{userData?.accountNumber?.slice(-5) || "XXXXX"}
         </Text>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 5 }}>
-          PHP 100,000,000
+          PHP {userData?.deposit || "0.00"}
         </Text>
       </View>
 
