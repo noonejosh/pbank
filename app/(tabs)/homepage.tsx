@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Image } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
@@ -19,6 +19,7 @@ const HomeScreen = () => {
   
   const [userData, setUserData] = useState<UserData | null>(null); // State to store user data
   const [loading, setLoading] = useState(true); // State to manage loading
+  const [isAccountVisible, setIsAccountVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -117,9 +118,24 @@ const HomeScreen = () => {
           borderRadius: 10,
         }}
       >
-        <Text style={{ fontSize: 10, color: "#333", marginTop: 5 }}>
-          DEBIT ACCOUNT ******{userData?.accountNumber?.slice(-5) || "XXXXX"}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ fontSize: 10, color: "#333", marginTop: 5 }}>
+            DEBIT ACCOUNT:{" "}
+            {isAccountVisible
+              ? userData?.accountNumber || "XXXXX"
+              : `******${userData?.accountNumber?.slice(-5) || "XXXXX"}`}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setIsAccountVisible(!isAccountVisible)}
+            style={{ marginLeft: 5, top:"12%"}} // Add some spacing between the text and the icon
+          >
+            <Ionicons
+              name={isAccountVisible ? "eye-off-outline" : "eye-outline"}
+              size={14}
+              color="#333"
+            />
+          </TouchableOpacity>
+        </View>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 5 }}>
           PHP {userData?.deposit || "0.00"}
         </Text>
