@@ -18,7 +18,6 @@ const HomeScreen = () => {
   }
   
   const [userData, setUserData] = useState<UserData | null>(null); // State to store user data
-  const [loading, setLoading] = useState(true); // State to manage loading
   const [isAccountVisible, setIsAccountVisible] = useState(false);
 
   useEffect(() => {
@@ -39,25 +38,15 @@ const HomeScreen = () => {
           }
         } catch (error) {
           console.error("Error fetching document: ", error);
-        } finally {
-          setLoading(false); // Stop loading after fetching
         }
       } else {
         console.error("Invalid uid:", uid);
-        setLoading(false);
       }
     };
 
     fetchUserData();
   }, [uid]); // Run the effect when `uid` changes
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "#CDFF57" }}>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
