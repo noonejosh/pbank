@@ -46,6 +46,12 @@ export default function ProfileScreen() {
     fetchUserData();
   }, [uid]);
 
+  const formatDeposit = (deposit: string) => {
+    const number = parseFloat(deposit); // Convert the deposit to a number
+    if (isNaN(number)) return "0.00"; // Handle invalid numbers
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
+  };
+
   // Handle Logout
   const handleLogout = async () => {
     try {
@@ -123,7 +129,9 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.rowBetween}>
           <Text style={styles.label}>Deposit:</Text>
-          <Text style={styles.value}>PHP {userData?.deposit || "0.00"}</Text>
+          <Text style={styles.value}>
+            PHP {userData?.deposit ? formatDeposit(userData.deposit) : "0.00"}
+          </Text>
         </View>
       </View>
 

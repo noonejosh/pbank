@@ -47,7 +47,12 @@ const HomeScreen = () => {
     fetchUserData();
   }, [uid]); // Run the effect when `uid` changes
 
-
+  const formatDeposit = (deposit: string) => {
+    const number = parseFloat(deposit); // Convert the deposit to a number
+    if (isNaN(number)) return "0.00"; // Handle invalid numbers
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
+  };
+  
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {/* Header */}
@@ -126,7 +131,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
         <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 5 }}>
-          PHP {userData?.deposit || "0.00"}
+          PHP {userData?.deposit ? formatDeposit(userData.deposit) : "0.00"}
         </Text>
       </View>
 
