@@ -246,7 +246,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    width: "100%",
     backgroundColor: "#C6FF33",
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -261,6 +260,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
+    zIndex: 10,
   },
 
   navButton: {
@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: "#000",
     fontWeight: "600",
+    textAlign: 'center',
   },
 
   navLabelActive: {
