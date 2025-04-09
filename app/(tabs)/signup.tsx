@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Pressable, Alert } from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable, Alert, TouchableOpacity } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -16,7 +16,11 @@ export default function SignUp() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [deposit, setDeposit] = useState(0); // Initialize deposit state
+  const [deposit] = useState(0); // Initialize deposit state
+  const [isActive, setIsActive] = useState(true); // State for active status
+  const [otp] = useState(0); // Initialize OTP state
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for password visibility
+  const [isPasswordValid, setIsPasswordValid] = useState(false); // State for password validation
 
   const router = useRouter(); // Initialize the router
 
@@ -39,6 +43,8 @@ export default function SignUp() {
         mobile,
         dateOfBirth: `${selectedMonth} ${selectedDay}, ${selectedYear}`,
         deposit,
+        isActive,
+        otp,
         createdAt: new Date().toISOString()
       });
 
@@ -137,15 +143,28 @@ export default function SignUp() {
       {/* Password Input */}
       <View style={styles.inputContainer}>
         <Ionicons name="lock-closed-outline" size={20} color="gray" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="Password" 
-          placeholderTextColor="gray" 
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="gray"
           value={password}
-          onChangeText={setPassword}
-          secureTextEntry
+          onChangeText={(text) => {
+            setPassword(text);
+            setIsPasswordValid(text.length >= 6); // Validate password length
+          }}
+          secureTextEntry={!isPasswordVisible} // Toggle visibility
         />
+        <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+          <Ionicons
+            name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+            size={20}
+            color="gray"
+          />
+        </TouchableOpacity>
       </View>
+      {!isPasswordValid && password.length > 0 && (
+        <Text style={styles.validationText}>Password must be at least 6 characters long.</Text>
+      )}
 
       {/* Create Account Button */}
       <Pressable style={styles.createAccountButton} onPress={handleSignUp}>
@@ -169,4 +188,10 @@ const styles = StyleSheet.create({
   picker: { width: "32%", backgroundColor: "white", borderRadius: 8 },
   createAccountButton: { backgroundColor: "#CDFF57", borderRadius: 8, height: 50, justifyContent: "center", alignItems: "center", marginTop: 10 },
   createAccountText: { color: "black", fontWeight: "bold", fontSize: 16 },
+  validationText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10,
+  },
 });
