@@ -27,20 +27,15 @@ export default function Login() {
       return;
     }
 
-    // Print email and password to the console
-    console.log("Email:", email);
-    console.log("Password:", password);
-
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       Alert.alert("Success", "Logged in successfully!");
-      console.log("User UID:", user.uid); // Print the user's UID to the console
       router.push({
         pathname: "./homepage",
         params: { 
-          
-        }, // Pass the UID as query parameters
+          uid: user.uid, // Pass the user ID to the homepage
+        }, 
       });
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
