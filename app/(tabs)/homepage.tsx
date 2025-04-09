@@ -20,7 +20,7 @@ const HomeScreen = () => {
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isAccountVisible, setIsAccountVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState("home"); // State to track active tab
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -44,10 +44,6 @@ const HomeScreen = () => {
     };
 
     fetchUserData();
-<<<<<<< HEAD
-  }, [uid]);
-
-=======
   }, [uid]); // Run the effect when `uid` changes
 
   const formatDeposit = (deposit: string) => {
@@ -56,7 +52,6 @@ const HomeScreen = () => {
     return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
   };
   
->>>>>>> 1c286a0a9f6655121cd2f5e13c383c175227f794
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       {/* Header */}
