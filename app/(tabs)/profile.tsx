@@ -9,6 +9,7 @@ import { doc, getDoc } from 'firebase/firestore';
 export default function ProfileScreen() {
   const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
   const router = useRouter();
+  const [isAccountVisible, setIsAccountVisible] = useState(false); // State to toggle account number visibility
   console.log("UID from params:", uid); // Log the UID for debugging
 
   interface UserData {
@@ -45,6 +46,12 @@ export default function ProfileScreen() {
 
     fetchUserData();
   }, [uid]);
+
+  const formatDeposit = (deposit: string) => {
+    const number = parseFloat(deposit); // Convert the deposit to a number
+    if (isNaN(number)) return "0.00"; // Handle invalid numbers
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
+  };
 
   // Handle Logout
   const handleLogout = async () => {
@@ -103,10 +110,16 @@ export default function ProfileScreen() {
         <Text style={styles.label}>ACCOUNT NUMBER</Text>
         <View style={styles.row}>
           <Text style={styles.value}>
-            {userData?.accountNumber || "XXXX XXXX XXXX XXXX"}
+            {isAccountVisible
+              ? userData?.accountNumber || "XXXX XXXX XXXX XXXX"
+              : "**** **** **** ****"}
           </Text>
-          <TouchableOpacity>
-            <Feather name="copy" size={16} color="black" />
+          <TouchableOpacity onPress={() => setIsAccountVisible(!isAccountVisible)}>
+            <Feather
+              name={isAccountVisible ? "eye-off" : "eye"}
+              size={16}
+              color="black"
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -122,8 +135,10 @@ export default function ProfileScreen() {
           <Text style={styles.value}>{userData?.email || "N/A"}</Text>
         </View>
         <View style={styles.rowBetween}>
-          <Text style={styles.label}>Deposit:</Text>
-          <Text style={styles.value}>PHP {userData?.deposit || "0.00"}</Text>
+          <Text style={styles.label}>Balance:</Text>
+          <Text style={styles.value}>
+            PHP {userData?.deposit ? formatDeposit(userData.deposit) : "0.00"}
+          </Text>
         </View>
       </View>
 
