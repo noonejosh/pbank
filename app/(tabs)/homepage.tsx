@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
@@ -176,18 +176,58 @@ const HomeScreen = () => {
 
       {/* Bottom Navigation */}
       <View style={styles.footer}>
-        <Link href="/(tabs)/homepage" style={{ alignItems: "center" }}>
-          <Ionicons name="home" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/transferfund" style={{ alignItems: "center" }}>
-          <Ionicons name="swap-horizontal" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/history" style={{ alignItems: "center" }}>
-          <Ionicons name="document-text" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/profile" style={{ alignItems: "center" }}>
-          <Ionicons name="person" size={24} color="black" />
-        </Link>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/homepage",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="home" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/transferfund",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="swap-horizontal" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/history",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="document-text" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/profile",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="person" size={24} color="black" />
+        </TouchableOpacity>
       </View>
     </View>
   );

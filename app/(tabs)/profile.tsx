@@ -1,23 +1,92 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
-import { Link } from 'expo-router'; // Ensure expo-router is installed
-import { signOut } from "firebase/auth"; // Import the signOut method
-import { auth } from "../../FirebaseConfig"; // Import your Firebase auth instance
-import { useRouter } from "expo-router"; // For navigation
-
+import { useRouter, useLocalSearchParams, Link } from 'expo-router';
+import { signOut, deleteUser } from "firebase/auth";
+import { auth, db } from "../../FirebaseConfig";
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function ProfileScreen() {
-  const router = useRouter(); // Initialize router for navigation
+  const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
+  const router = useRouter();
+  console.log("UID from params:", uid); // Log the UID for debugging
 
+  interface UserData {
+    uid?: string;
+    name?: string;
+    accountNumber?: string;
+    deposit?: string;
+    email?: string;
+    mobile?: string;
+    dateOfBirth?: Date;
+    createdAt?: Date;
+  }
+
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (typeof uid === "string") {
+        const docRef = doc(db, "users", uid, "userInfo", "profile");
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setUserData(docSnap.data() as UserData);
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching document: ", error);
+        }
+      } else {
+        console.error("Invalid uid:", uid);
+      }
+    };
+
+    fetchUserData();
+  }, [uid]);
+
+  // Handle Logout
   const handleLogout = async () => {
     try {
-      await signOut(auth); // Sign out the user
-      router.replace("/login"); // Redirect to the login screen
+      await signOut(auth);
+      router.replace("/login");
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to log out. Please try again.");
     }
   };
+
+  // Handle Delete Account
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              if (user) {
+                await deleteUser(user);
+                Alert.alert("Account Deleted", "Your account has been deleted.");
+                router.replace("/signup");
+              } else {
+                Alert.alert("Error", "No user is currently logged in.");
+              }
+            } catch (error) {
+              console.error("Error deleting account:", error);
+              Alert.alert("Error", "Failed to delete account. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Profile</Text>
@@ -26,14 +95,16 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <Ionicons name="person-circle" size={60} color="black" style={styles.icon} />
         <Text style={styles.subtitle}>It's a good day for banking.</Text>
-        <Text style={styles.name}>RIEYAN JIN WOO</Text>
+        <Text style={styles.name}>{userData?.name || "User Name"}</Text>
       </View>
 
       {/* Account Information */}
       <View style={styles.card}>
         <Text style={styles.label}>ACCOUNT NUMBER</Text>
         <View style={styles.row}>
-          <Text style={styles.value}>0121 6651 6516 184</Text>
+          <Text style={styles.value}>
+            {userData?.accountNumber || "XXXX XXXX XXXX XXXX"}
+          </Text>
           <TouchableOpacity>
             <Feather name="copy" size={16} color="black" />
           </TouchableOpacity>
@@ -44,32 +115,15 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <View style={styles.rowBetween}>
           <Text style={styles.label}>Contact Number:</Text>
-          <View style={styles.row}>
-            <Text style={styles.value}>+63 989 456 213</Text>
-            <TouchableOpacity>
-              <MaterialIcons name="edit" size={16} color="black" />
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.value}>{userData?.mobile || "N/A"}</Text>
         </View>
-
         <View style={styles.rowBetween}>
           <Text style={styles.label}>E-mail Address:</Text>
-          <View style={styles.row}>
-            <Text style={styles.value}>rieyanjinwoo</Text>
-            <TouchableOpacity>
-              <MaterialIcons name="edit" size={16} color="black" />
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.value}>{userData?.email || "N/A"}</Text>
         </View>
-
         <View style={styles.rowBetween}>
-          <Text style={styles.label}>Password:</Text>
-          <View style={styles.row}>
-            <Text style={styles.value}>********</Text>
-            <TouchableOpacity>
-              <MaterialIcons name="edit" size={16} color="black" />
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.label}>Deposit:</Text>
+          <Text style={styles.value}>PHP {userData?.deposit || "0.00"}</Text>
         </View>
       </View>
 
@@ -78,27 +132,65 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.buttonText}>LOG OUT</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteButton}>
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
           <Text style={styles.buttonText}>DELETE ACCOUNT</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Bottom Navigation */}
       <View style={styles.footer}>
-        <Link href="/(tabs)/homepage" style={{ alignItems: "center" }}>
-          <Ionicons name="home" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/transferfund" style={{ alignItems: "center" }}>
-          <Ionicons name="swap-horizontal" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/history" style={{ alignItems: "center" }}>
-          <Ionicons name="document-text" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/profile" style={{ alignItems: "center" }}>
-          <Ionicons name="person" size={24} color="black" />
-        </Link>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/homepage",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="home" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/transferfund",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="swap-horizontal" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/history",
+              params: {
+                uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="document-text" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/profile",
+              params: {
+              uid: uid, // Pass the user ID to the profile screen
+              },
+            })
+          }
+        >
+        <Ionicons name="person" size={24} color="black" />
+        </TouchableOpacity>
       </View>
-    </View>
+    </View>   
   );
 }
 
@@ -119,7 +211,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#C6FF33',
     borderRadius: 10,
-    padding: 20, // Increased padding for better spacing
+    padding: 20,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -162,7 +254,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 10, // Added spacing between rows
+    marginVertical: 10,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -190,7 +282,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'black',
     fontWeight: 'bold',
-    fontSize: 8,
+    fontSize: 12,
   },
   footer: {
     position: 'absolute',
