@@ -43,7 +43,7 @@ export default function SignUp() {
       });
 
       Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.push("./index") } // Navigate to 'index' screen
+        { text: "OK", onPress: () => router.push("./login") } // Navigate to 'index' screen
       ]);
     } catch (error) {
       Alert.alert("Signup Failed", error instanceof Error ? error.message : "An unknown error occurred.");
