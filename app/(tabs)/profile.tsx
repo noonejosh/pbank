@@ -2,8 +2,22 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { Link } from 'expo-router'; // Ensure expo-router is installed
+import { signOut } from "firebase/auth"; // Import the signOut method
+import { auth } from "../../FirebaseConfig"; // Import your Firebase auth instance
+import { useRouter } from "expo-router"; // For navigation
+
 
 export default function ProfileScreen() {
+  const router = useRouter(); // Initialize router for navigation
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Sign out the user
+      router.replace("/login"); // Redirect to the login screen
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Profile</Text>
@@ -61,7 +75,7 @@ export default function ProfileScreen() {
 
       {/* Action Buttons */}
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.buttonText}>LOG OUT</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.deleteButton}>
