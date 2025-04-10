@@ -1,7 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router'; // Ensure expo-router is installed
+import { router, useLocalSearchParams } from 'expo-router';
 
 interface Transaction {
   type: string;
@@ -14,6 +21,9 @@ interface Transaction {
 }
 
 const TransactionHistoryScreen = () => {
+  const { uid } = useLocalSearchParams();
+  const [activeTab, setActiveTab] = useState('history'); 
+
   const transactions: Transaction[] = [
     {
       type: 'Cash - in',
@@ -45,7 +55,9 @@ const TransactionHistoryScreen = () => {
         {item.details && (
           <Text style={styles.transactionDetailsText}>{item.details}</Text>
         )}
-        <Text style={styles.transactionId}>Transaction ID: {item.transactionId}</Text>
+        <Text style={styles.transactionId}>
+          Transaction ID: {item.transactionId}
+        </Text>
       </View>
       <View style={styles.transactionAmount}>
         <Text style={styles.amount}>{item.amount}</Text>
@@ -60,10 +72,14 @@ const TransactionHistoryScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Transaction History</Text>
-      
+
       <View style={styles.searchBar}>
         <Ionicons name="search" size={20} color="#CDFF57" />
-        <TextInput style={styles.searchText} placeholder="Search Transactions" placeholderTextColor="#B0B0B0" />
+        <TextInput
+          style={styles.searchText}
+          placeholder="Search Transactions"
+          placeholderTextColor="#B0B0B0"
+        />
       </View>
 
       <FlatList
@@ -79,22 +95,86 @@ const TransactionHistoryScreen = () => {
 
       {/* Bottom Navigation */}
       <View style={styles.footer}>
-        <Link href="/(tabs)/homepage" style={{ alignItems: "center" }}>
-          <Ionicons name="home" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/transferfund" style={{ alignItems: "center" }}>
-          <Ionicons name="swap-horizontal" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/history" style={{ alignItems: "center" }}>
-          <Ionicons name="document-text" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/profile" style={{ alignItems: "center" }}>
-          <Ionicons name="person" size={24} color="black" />
-        </Link>
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'home' && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab('home');
+            router.push({ pathname: '/(tabs)/homepage', params: { uid } });
+          }}
+        >
+          <Ionicons
+            name="home"
+            size={20}
+            color={activeTab === 'home' ? '#CDFF57' : 'black'}
+          />
+          <Text
+            style={[styles.navLabel, activeTab === 'home' && styles.navLabelActive]}
+          >
+            Home
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'transfer' && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab('transfer');
+            router.push({ pathname: '/(tabs)/transferfund', params: { uid } });
+          }}
+        >
+          <Ionicons
+            name="swap-horizontal"
+            size={20}
+            color={activeTab === 'transfer' ? '#CDFF57' : 'black'}
+          />
+          <Text
+            style={[styles.navLabel, activeTab === 'transfer' && styles.navLabelActive]}
+          >
+            Transfer
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'history' && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab('history');
+            router.push({ pathname: '/(tabs)/history', params: { uid } });
+          }}
+        >
+          <Ionicons
+            name="document-text"
+            size={20}
+            color={activeTab === 'history' ? '#CDFF57' : 'black'}
+          />
+          <Text
+            style={[styles.navLabel, activeTab === 'history' && styles.navLabelActive]}
+          >
+            History
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navButton, activeTab === 'profile' && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab('profile');
+            router.push({ pathname: '/(tabs)/profile', params: { uid } });
+          }}
+        >
+          <Ionicons
+            name="person"
+            size={20}
+            color={activeTab === 'profile' ? '#CDFF57' : 'black'}
+          />
+          <Text
+            style={[styles.navLabel, activeTab === 'profile' && styles.navLabelActive]}
+          >
+            Profile
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -118,6 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
+    marginHorizontal: 8,
   },
   searchText: {
     color: '#CDFF57',
@@ -130,6 +211,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 16,
     marginBottom: 10,
+    marginHorizontal: 8,
   },
   transactionIcon: {
     marginRight: 16,
@@ -177,12 +259,64 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "#C6FF33",
-    paddingVertical: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 3,
+    borderColor: "#000",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+
+  navButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+
+  navButtonActive: {
+    backgroundColor: "#000",
+  },
+
+  navLabel: {
+    fontSize: 11,
+    marginTop: 3,
+    color: "#000",
+    fontWeight: "600",
+    textAlign: 'center',
+  },
+
+  navLabelActive: {
+    color: "#CDFF57",
+  },
+
+  navIconActive: {
+    color: "#CDFF57",
+  },
+
+  actionButtons: {
     flexDirection: "row",
     justifyContent: "space-around",
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    marginVertical: 20,
+    paddingHorizontal: 10,
   },
+
+  actionText: {
+    color: "#CDFF57",
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  
   emptyTransactions: {
     alignItems: 'center',
     justifyContent: 'center',
