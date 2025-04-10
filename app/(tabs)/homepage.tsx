@@ -147,12 +147,22 @@ const HomeScreen = () => {
             <Text style={styles.actionText}>Invest</Text>
           </View>
         </Link>
-        <Link href="/(tabs)/paybills" style={{ alignItems: "center" }}>
+        <TouchableOpacity
+          style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/paybills",
+              params: {
+                uid: uid, // Pass the user ID if needed
+              },
+            })
+          }
+        >
           <View style={{ alignItems: "center" }}>
             <Ionicons name="receipt-outline" size={32} color="#CDFF57" />
             <Text style={styles.actionText}>Pay Bills</Text>
           </View>
-        </Link>
+        </TouchableOpacity>
         <Link href="/(tabs)/savings" style={{ alignItems: "center" }}>
           <View style={{ alignItems: "center" }}>
             <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
