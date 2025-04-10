@@ -22,7 +22,7 @@ interface Transaction {
 
 const TransactionHistoryScreen = () => {
   const { uid } = useLocalSearchParams();
-  const [activeTab, setActiveTab] = useState('history'); // ✅ Hook moved here
+  const [activeTab, setActiveTab] = useState('history'); 
 
   const transactions: Transaction[] = [
     {
