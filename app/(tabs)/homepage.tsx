@@ -6,7 +6,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
 const HomeScreen = () => {
-  const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
+  const { uid } = useLocalSearchParams();
+
   interface UserData {
     name?: string;
     accountNumber?: string;
@@ -16,23 +17,21 @@ const HomeScreen = () => {
     dateOfBirth?: Date;
     createdAt?: Date;
   }
-  
-  const [userData, setUserData] = useState<UserData | null>(null); // State to store user data
+
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isAccountVisible, setIsAccountVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (typeof uid === "string") {
-        // Create the document reference with the uid in the path
         const docRef = doc(db, "users", uid, "userInfo", "profile");
 
-        // Fetch the document
         try {
           const docSnap = await getDoc(docRef);
-
           if (docSnap.exists()) {
             console.log("Document data:", docSnap.data());
-            setUserData(docSnap.data()); // Update the state with fetched data
+            setUserData(docSnap.data());
           } else {
             console.log("No such document!");
           }
@@ -121,7 +120,7 @@ const HomeScreen = () => {
           </Text>
           <TouchableOpacity
             onPress={() => setIsAccountVisible(!isAccountVisible)}
-            style={{ marginLeft: 5, top:"12%"}} // Add some spacing between the text and the icon
+            style={{ marginLeft: 5, top: "12%" }}
           >
             <Ionicons
               name={isAccountVisible ? "eye-off-outline" : "eye-outline"}
@@ -189,59 +188,62 @@ const HomeScreen = () => {
         </Text>
       </ScrollView>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - Enhanced */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={{ alignItems: "center" }}
-          onPress={() =>
+          style={[styles.navButton, activeTab === "home" && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab("home");
             router.push({
               pathname: "/(tabs)/homepage",
-              params: {
-                uid: uid, // Pass the user ID to the profile screen
-              },
-            })
-          }
+              params: { uid },
+            });
+          }}
         >
-        <Ionicons name="home" size={24} color="black" />
+          <Ionicons name="home" size={20} color={activeTab === "home" ? "#CDFF57" : "black"} />
+          <Text style={[styles.navLabel, activeTab === "home" && styles.navLabelActive]}>Home</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={{ alignItems: "center" }}
-          onPress={() =>
+          style={[styles.navButton, activeTab === "transfer" && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab("transfer");
             router.push({
               pathname: "/(tabs)/transferfund",
-              params: {
-                uid: uid, // Pass the user ID to the profile screen
-              },
-            })
-          }
+              params: { uid },
+            });
+          }}
         >
-        <Ionicons name="swap-horizontal" size={24} color="black" />
+          <Ionicons name="swap-horizontal" size={20} color={activeTab === "transfer" ? "#CDFF57" : "black"} />
+          <Text style={[styles.navLabel, activeTab === "transfer" && styles.navLabelActive]}>Transfer</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={{ alignItems: "center" }}
-          onPress={() =>
+          style={[styles.navButton, activeTab === "history" && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab("history");
             router.push({
               pathname: "/(tabs)/history",
-              params: {
-                uid: uid, // Pass the user ID to the profile screen
-              },
-            })
-          }
+              params: { uid },
+            });
+          }}
         >
-        <Ionicons name="document-text" size={24} color="black" />
+          <Ionicons name="document-text" size={20} color={activeTab === "history" ? "#CDFF57" : "black"} />
+          <Text style={[styles.navLabel, activeTab === "history" && styles.navLabelActive]}>History</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={{ alignItems: "center" }}
-          onPress={() =>
+          style={[styles.navButton, activeTab === "profile" && styles.navButtonActive]}
+          onPress={() => {
+            setActiveTab("profile");
             router.push({
               pathname: "/(tabs)/profile",
-              params: {
-                uid: uid, // Pass the user ID to the profile screen
-              },
-            })
-          }
+              params: { uid },
+            });
+          }}
         >
-        <Ionicons name="person" size={24} color="black" />
+          <Ionicons name="person" size={20} color={activeTab === "profile" ? "#CDFF57" : "black"} />
+          <Text style={[styles.navLabel, activeTab === "profile" && styles.navLabelActive]}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -255,18 +257,57 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "#C6FF33",
-    paddingVertical: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     flexDirection: "row",
-    justifyContent: "space-around",
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    justifyContent: "space-between",
+    borderTopWidth: 3,
+    borderColor: "#000",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
   },
+
+  navButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+
+  navButtonActive: {
+    backgroundColor: "#000",
+  },
+
+  navLabel: {
+    fontSize: 11,
+    marginTop: 3,
+    color: "#000",
+    fontWeight: "600",
+    textAlign: 'center',
+  },
+
+  navLabelActive: {
+    color: "#CDFF57",
+  },
+
+  navIconActive: {
+    color: "#CDFF57",
+  },
+
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-around",
     marginVertical: 20,
     paddingHorizontal: 10,
   },
+
   actionText: {
     color: "#CDFF57",
     fontSize: 12,

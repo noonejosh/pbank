@@ -9,11 +9,24 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router'; // Ensure expo-router is installed
+import { Link, router, useLocalSearchParams } from "expo-router";
 
 const TransferFundsScreen = () => {
+  const { uid } = useLocalSearchParams();
+
+  interface UserData {
+    name?: string;
+    accountNumber?: string;
+    deposit?: string;
+    email?: string;
+    mobile?: string;
+    dateOfBirth?: Date;
+    createdAt?: Date;
+  }
+
   const [searchText, setSearchText] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('transfer');
+  
 
   const tabs = ['All', 'Transfers', 'Bills Payment'];
 
@@ -35,28 +48,28 @@ const TransferFundsScreen = () => {
       </View>
 
       <View style={styles.actionsBar}>
-      <View style={{ alignItems: "center" }}>
-      <Ionicons name="qr-code-outline" size={32} color="#CDFF57" />
-      <Text style={styles.actionText}>Scan QR</Text>
-      </View>
-      <Link href="/(tabs)/savings" style={{ alignItems: "center" }}>
-      <View style={{ alignItems: "center" }}>
-      <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
-      <Text style={styles.actionText}>Invest</Text>
-      </View>
-      </Link>
-      <Link href="/(tabs)/paybills" style={{ alignItems: "center" }}>
-      <View style={{ alignItems: "center" }}>
-      <Ionicons name="receipt-outline" size={32} color="#CDFF57" />
-      <Text style={styles.actionText}>Pay Bills</Text>
-      </View>
-      </Link>
-      <Link href="/(tabs)/savings" style={{ alignItems: "center" }}>
-      <View style={{ alignItems: "center" }}>
-      <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
-      <Text style={styles.actionText}>Savings</Text>
-      </View>
-      </Link>
+        <View style={{ alignItems: 'center' }}>
+          <Ionicons name="qr-code-outline" size={32} color="#CDFF57" />
+          <Text style={styles.actionText}>Scan QR</Text>
+        </View>
+        <Link href="/(tabs)/savings" style={{ alignItems: 'center' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
+            <Text style={styles.actionText}>Invest</Text>
+          </View>
+        </Link>
+        <Link href="/(tabs)/paybills" style={{ alignItems: 'center' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Ionicons name="receipt-outline" size={32} color="#CDFF57" />
+            <Text style={styles.actionText}>Pay Bills</Text>
+          </View>
+        </Link>
+        <Link href="/(tabs)/savings" style={{ alignItems: 'center' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
+            <Text style={styles.actionText}>Savings</Text>
+          </View>
+        </Link>
       </View>
 
       <View style={styles.recipientsContainer}>
@@ -66,16 +79,14 @@ const TransferFundsScreen = () => {
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab}
-              style={[
-                styles.tab,
-                activeTab === tab && styles.activeTab,
-              ]}
+              style={[styles.tab, activeTab === tab && styles.activeTab]}
               onPress={() => setActiveTab(tab)}
             >
-              <Text style={[
-                styles.tabText,
-                activeTab === tab && styles.activeTabText,
-              ]}>{tab}</Text>
+              <Text
+                style={[styles.tabText, activeTab === tab && styles.activeTabText]}
+              >
+                {tab}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -105,24 +116,67 @@ const TransferFundsScreen = () => {
         </ScrollView>
       </View>
 
-      {/* Bottom Navigation */}
       <View style={styles.footer}>
-        <Link href="/(tabs)/homepage" style={{ alignItems: 'center' }}>
-          <Ionicons name="home" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/transferfund" style={{ alignItems: 'center' }}>
-          <Ionicons name="swap-horizontal" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/history" style={{ alignItems: 'center' }}>
-          <Ionicons name="document-text" size={24} color="black" />
-        </Link>
-        <Link href="/(tabs)/profile" style={{ alignItems: 'center' }}>
-          <Ionicons name="person" size={24} color="black" />
-        </Link>
-      </View>
-    </View>
-  );
-};
+          <TouchableOpacity
+            style={[styles.navButton, activeTab === "home" && styles.navButtonActive]}
+            onPress={() => {
+              setActiveTab("home");
+              router.push({
+                pathname: "/(tabs)/homepage",
+                params: { uid },
+              });
+            }}
+          >
+            <Ionicons name="home" size={20} color={activeTab === "home" ? "#CDFF57" : "black"} />
+            <Text style={[styles.navLabel, activeTab === "home" && styles.navLabelActive]}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, activeTab === "transfer" && styles.navButtonActive]}
+            onPress={() => {
+              setActiveTab("transfer");
+              router.push({
+                pathname: "/(tabs)/transferfund",
+                params: { uid },
+              });
+            }}
+          >
+            <Ionicons name="swap-horizontal" size={20} color={activeTab === "transfer" ? "#CDFF57" : "black"} />
+            <Text style={[styles.navLabel, activeTab === "transfer" && styles.navLabelActive]}>Transfer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, activeTab === "history" && styles.navButtonActive]}
+            onPress={() => {
+              setActiveTab("history");
+              router.push({
+                pathname: "/(tabs)/history",
+                params: { uid },
+              });
+            }}
+          >
+            <Ionicons name="document-text" size={20} color={activeTab === "history" ? "#CDFF57" : "black"} />
+            <Text style={[styles.navLabel, activeTab === "history" && styles.navLabelActive]}>History</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, activeTab === "profile" && styles.navButtonActive]}
+            onPress={() => {
+              setActiveTab("profile");
+              router.push({
+                pathname: "/(tabs)/profile",
+                params: { uid },
+              });
+            }}
+          >
+            <Ionicons name="person" size={20} color={activeTab === "profile" ? "#CDFF57" : "black"} />
+            <Text style={[styles.navLabel, activeTab === "profile" && styles.navLabelActive]}>Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+          </View>
+        );
+      };
 
 const styles = StyleSheet.create({
   container: {
@@ -157,18 +211,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 16,
-  },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionCircle: {
-    backgroundColor: '#CDFF57',
-    borderRadius: 24,
-    padding: 8,
-  },
-  actionText: {
-    color: '#CDFF57',
-    marginTop: 4,
   },
   recipientsContainer: {
     backgroundColor: '#F5F5F5',
@@ -234,17 +276,69 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#C6FF33',
-    paddingVertical: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    backgroundColor: "#C6FF33",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 3,
+    borderColor: "#000",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
   },
+
+  navButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+
+  navButtonActive: {
+    backgroundColor: "#000",
+  },
+
+  navLabel: {
+    fontSize: 11,
+    marginTop: 3,
+    color: "#000",
+    fontWeight: "600",
+    textAlign: 'center',
+  },
+
+  navLabelActive: {
+    color: "#CDFF57",
+  },
+
+  navIconActive: {
+    color: "#CDFF57",
+  },
+
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 20,
+    paddingHorizontal: 10,
+  },
+
+  actionText: {
+    color: "#CDFF57",
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  
   emptyListText: {
     textAlign: 'center',
     marginTop: 20,
