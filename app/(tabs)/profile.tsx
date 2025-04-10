@@ -306,7 +306,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+<<<<<<< HEAD
   footer: { 
+=======
+  footer: {
+>>>>>>> 3b6edb3e57b0e537fdaf799ef82b82f452f8c18d
     position: "absolute",
     bottom: 0,
     left: 0,
