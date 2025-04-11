@@ -17,6 +17,7 @@ const TransactionHistoryScreen = () => {
   const { uid } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('history');
   const [userData, setUserData] = useState<Transaction | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   
   interface Transaction {
     type: string;
@@ -28,49 +29,76 @@ const TransactionHistoryScreen = () => {
     time: string;
   }
   
+  console.log("TransactionHistoryScreen uid:", uid); // Log the uid for debugging
   useEffect(() => {
-      const fetchUserInfoDocuments = async () => {
-        if (typeof uid === "string") {
-          const userInfoCollectionRef = collection(db, "users", uid, "userInfo", "history"); // Reference to the userInfo subcollection
-  
-          try {
-            const querySnapshot = await getDocs(userInfoCollectionRef); // Fetch all documents in the subcollection
-            const documents = querySnapshot.docs.map((doc) => ({
-              id: doc.id, // Include the document ID
-              ...doc.data(), // Spread the document data to match the UserData structure
-            }));
-            console.log("Fetched documents:", documents); // Log the fetched documents
-          } catch (error) {
-            console.error("Error fetching documents: ", error);
-          }
-        } else {
-          console.error("Invalid uid:", uid);
-        }
-      };
-  
-      fetchUserInfoDocuments();
-    }, [uid]); // Run the effect when `uid` changes
+    const fetchTransactionHistory = async () => {
+      if (typeof uid === "string") {
+        try {
+          // References to subcollections
+          const depositRef = collection(db, "users", uid, "userInfo", "history", "deposit");
+          const withdrawRef = collection(db, "users", uid, "userInfo", "history", "withdraw");
+          const transferRef = collection(db, "users", uid, "userInfo", "history", "transfer");
 
-  const transactions: Transaction[] = [
-    {
-      type: 'Cash - in',
-      details: 'From ABC Bank ATM',
-      amount: '$ 100.00',
-      status: 'Confirmed',
-      transactionId: '564925374920',
-      date: '17 Sep 2023',
-      time: '10:34 AM',
-    },
-    {
-      type: 'Cashback from purchase',
-      details: 'Purchase from Amazon.com',
-      amount: '$ 1.75',
-      status: 'Confirmed',
-      transactionId: '685746354219',
-      date: '16 Sep 2023',
-      time: '16:08 PM',
-    },
-  ];
+          // Fetch documents from each subcollection
+          const [depositSnapshot, withdrawSnapshot, transferSnapshot] = await Promise.all([
+            getDocs(depositRef),
+            getDocs(withdrawRef),
+            getDocs(transferRef),
+          ]);
+
+          // Map documents from each subcollection
+          const depositDocs = depositSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: "Deposit",
+            details: doc.data().details || "",
+            amount: doc.data().amount || "0",
+            status: doc.data().status || "Pending",
+            transactionId: doc.id,
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+
+          const withdrawDocs = withdrawSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: "Withdraw",
+            details: doc.data().details || "",
+            amount: doc.data().amount || "0",
+            status: doc.data().status || "Pending",
+            transactionId: doc.id,
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+
+          const transferDocs = transferSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: "Transfer",
+            details: doc.data().details || "",
+            amount: doc.data().amount || "0",
+            status: doc.data().status || "Pending",
+            transactionId: doc.id,
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+
+          // Combine all transactions
+          const allTransactions = [...depositDocs, ...withdrawDocs, ...transferDocs];
+          console.log("All Transactions:", allTransactions);
+
+          // Optionally sort transactions by date or time
+          allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+          // Set the combined transactions to state
+          setTransactions(allTransactions);
+        } catch (error) {
+          console.error("Error fetching transaction history:", error);
+        }
+      } else {
+        console.error("Invalid uid:", uid);
+      }
+    };
+
+    fetchTransactionHistory();
+  }, [uid]); // Run the effect when `uid` changes
 
   const renderItem = ({ item }: { item: Transaction }) => (
     <View style={styles.transactionItem}>
