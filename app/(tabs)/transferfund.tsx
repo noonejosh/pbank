@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
 
-  actionText: {
+  actionText: { 
     color: "#CDFF57",
     fontSize: 12,
     marginTop: 5,
@@ -346,4 +346,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TransferFundsScreen;
+export default TransferFundsScreen; 

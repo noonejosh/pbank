@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     color: "#CDFF57",
   },
 
-  navIconActive: {
+  navIconActive: { 
     color: "#CDFF57",
   },
 
