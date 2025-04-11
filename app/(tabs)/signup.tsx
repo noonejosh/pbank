@@ -42,9 +42,8 @@ export default function SignUp() {
           const user = userCredential.user;
 
           // Store user details in Firestore
-          await setDoc(doc(collection(db, "users", user.uid, "userInfo"), "profile"), {
+          await setDoc(doc(collection(db, "users", user.uid, "userInfo"), accountNumber), {
             name,
-            accountNumber,
             email,
             mobile,
             dateOfBirth: `${selectedMonth} ${selectedDay}, ${selectedYear}`,

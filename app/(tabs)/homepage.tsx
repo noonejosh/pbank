@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
 const HomeScreen = () => {
   const { uid } = useLocalSearchParams();
 
   interface UserData {
+    id?: string; // Document ID
     name?: string;
-    accountNumber?: string;
     deposit?: string;
     email?: string;
     mobile?: string;
@@ -23,27 +23,32 @@ const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState("home");
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserInfoDocuments = async () => {
       if (typeof uid === "string") {
-        const docRef = doc(db, "users", uid, "userInfo", "profile");
+        const userInfoCollectionRef = collection(db, "users", uid, "userInfo"); // Reference to the userInfo subcollection
 
         try {
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            console.log("Document data:", docSnap.data());
-            setUserData(docSnap.data());
+          const querySnapshot = await getDocs(userInfoCollectionRef); // Fetch all documents in the subcollection
+          const documents = querySnapshot.docs.map((doc) => ({
+            id: doc.id, // Include the document ID
+            ...doc.data(), // Spread the document data to match the UserData structure
+          }));
+
+          // Assuming you want to set the first document as the userData
+          if (documents.length > 0) {
+            setUserData(documents[0] as UserData); // Set the first document as userData
           } else {
-            console.log("No such document!");
+            console.log("No documents found in userInfo.");
           }
         } catch (error) {
-          console.error("Error fetching document: ", error);
+          console.error("Error fetching documents: ", error);
         }
       } else {
         console.error("Invalid uid:", uid);
       }
     };
 
-    fetchUserData();
+    fetchUserInfoDocuments();
   }, [uid]); // Run the effect when `uid` changes
 
   const formatDeposit = (deposit: string) => {
@@ -115,8 +120,8 @@ const HomeScreen = () => {
           <Text style={{ fontSize: 10, color: "#333", marginTop: 5 }}>
             DEBIT ACCOUNT:{" "}
             {isAccountVisible
-              ? userData?.accountNumber || "XXXXX"
-              : `******${userData?.accountNumber?.slice(-5) || "XXXXX"}`}
+              ? userData?.id || "XXXXX"
+              : `******${userData?.id?.slice(-5) || "XXXXX"}`}
           </Text>
           <TouchableOpacity
             onPress={() => setIsAccountVisible(!isAccountVisible)}
@@ -152,7 +157,8 @@ const HomeScreen = () => {
             router.push({
               pathname: "/(tabs)/paybills",
               params: {
-                uid: uid, // Pass the user ID if needed
+                uid: uid,
+                accountNumber: userData?.id, // Pass the user ID if needed
               },
             })
           }
@@ -238,7 +244,7 @@ const HomeScreen = () => {
             setActiveTab("profile");
             router.push({
               pathname: "/(tabs)/profile",
-              params: { uid },
+              params: { uid: uid, accountNumber: userData?.id },
             });
           }}
         >
@@ -297,7 +303,7 @@ const styles = StyleSheet.create({
     color: "#CDFF57",
   },
 
-  navIconActive: { 
+  navIconActive: {
     color: "#CDFF57",
   },
 

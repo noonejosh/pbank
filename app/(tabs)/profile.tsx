@@ -7,7 +7,7 @@ import { auth, db } from "../../FirebaseConfig";
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function ProfileScreen() {
-  const { uid } = useLocalSearchParams();
+  const { uid, accountNumber } = useLocalSearchParams();
   const router = useRouter();
   const [isAccountVisible, setIsAccountVisible] = useState(false);
 
@@ -27,8 +27,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (typeof uid === "string") {
-        const docRef = doc(db, "users", uid, "userInfo", "profile");
+      if (typeof uid === "string" && typeof accountNumber === "string") {
+        const docRef = doc(db, "users", uid, "userInfo", accountNumber);
         try {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
@@ -107,7 +107,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Account Number</Text>
         <View style={styles.row}>
           <Text style={styles.accountNumber}>
-            {isAccountVisible ? userData?.accountNumber || "XXXX XXXX XXXX XXXX" : "**** **** **** ****"}
+            {isAccountVisible ? accountNumber || "XXXX XXXX XXXX XXXX" : "**** **** **** ****"}
           </Text>
           <TouchableOpacity onPress={() => setIsAccountVisible(!isAccountVisible)}>
             <Feather name={isAccountVisible ? "eye-off" : "eye"} size={18} color="#C6FF33" />
