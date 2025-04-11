@@ -80,6 +80,13 @@ export default function SignUp() {
     }
   };
 
+  const getDaysInMonth = (month: string, year: string) => {
+    if (!month || !year) return [];
+    const monthIndex = new Date(`${month} 1, ${year}`).getMonth(); // Get the month index (0-11)
+    const daysInMonth = new Date(parseInt(year), monthIndex + 1, 0).getDate(); // Get the last day of the month
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1); // Generate an array of days
+  };
+
   return (
     <View style={styles.container}>
       {/* Back Button */}
@@ -144,23 +151,37 @@ export default function SignUp() {
       {/* Date of Birth */}
       <Text style={styles.dobLabel}>Date of Birth:</Text>
       <View style={styles.dobContainer}>
+        {/* Month Picker */}
         <Picker selectedValue={selectedMonth} style={styles.picker} onValueChange={setSelectedMonth}>
-          <Picker.Item label="Month" value="" />
+          <Picker.Item label="Month"/>
           <Picker.Item label="January" value="January" />
-          <Picker.Item label="February" value="Febuary" />
+          <Picker.Item label="February" value="February" />
           <Picker.Item label="March" value="March" />
+          <Picker.Item label="April" value="April" />
+          <Picker.Item label="May" value="May" />
+          <Picker.Item label="June" value="June" />
+          <Picker.Item label="July" value="July" />
+          <Picker.Item label="August" value="August" />
+          <Picker.Item label="September" value="September" />
+          <Picker.Item label="October" value="October" />
+          <Picker.Item label="November" value="November" />
+          <Picker.Item label="December" value="December" />
         </Picker>
+
+        {/* Day Picker */}
         <Picker selectedValue={selectedDay} style={styles.picker} onValueChange={setSelectedDay}>
-          <Picker.Item label="Day" value="" />
-          <Picker.Item label="1" value="1" />
-          <Picker.Item label="2" value="2" />
-          <Picker.Item label="3" value="3" />
+          <Picker.Item label="Day" />
+          {getDaysInMonth(selectedMonth, selectedYear).map((day) => (
+            <Picker.Item key={day} label={day.toString()} value={day.toString()} />
+          ))}
         </Picker>
+
+        {/* Year Picker */}
         <Picker selectedValue={selectedYear} style={styles.picker} onValueChange={setSelectedYear}>
-          <Picker.Item label="Year" value="" />
-          <Picker.Item label="2000" value="2000" />
-          <Picker.Item label="2001" value="2001" />
-          <Picker.Item label="2002" value="2002" />
+          <Picker.Item label="Year"/>
+          {Array.from({ length: 2025 - 1980 + 1 }, (_, i) => 1980 + i).map((year) => (
+            <Picker.Item key={year} label={year.toString()} value={year.toString()} />
+          ))}
         </Picker>
       </View>
 
