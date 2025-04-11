@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, Pressable, Alert, TouchableOpacity }
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../FirebaseConfig"; // Ensure auth and db are exported from FirebaseConfig
 import { useRouter } from "expo-router";
 
@@ -31,26 +31,50 @@ export default function SignUp() {
     }
 
     try {
-      // Register user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      //Validate information
+      const docRef = doc(db, "userBankInfo", "users", "accountNumbers", accountNumber);
+      const docSnap = await getDoc(docRef);
+      const dob = `${selectedMonth} ${selectedDay}, ${selectedYear}`;
+      if (docSnap.exists()) { 
+        if(docSnap.data().name == name && docSnap.data().email === email && docSnap.data().mobile === mobile && docSnap.data().dob === dob) {
+          // Register user in Firebase Authentication
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
 
-      // Store user details in Firestore
-      await setDoc(doc(collection(db, "users", user.uid, "userInfo"), "profile"), {
-        name,
-        accountNumber,
-        email,
-        mobile,
-        dateOfBirth: `${selectedMonth} ${selectedDay}, ${selectedYear}`,
-        deposit,
-        isActive,
-        otp,
-        createdAt: new Date().toISOString()
-      });
+          // Store user details in Firestore
+          await setDoc(doc(collection(db, "users", user.uid, "userInfo"), "profile"), {
+            name,
+            accountNumber,
+            email,
+            mobile,
+            dateOfBirth: `${selectedMonth} ${selectedDay}, ${selectedYear}`,
+            deposit: docSnap.data().deposit,
+            isActive,
+            otp,
+            createdAt: new Date().toISOString()
+          });
 
-      Alert.alert("Success", "Account created successfully!", [
-        { text: "OK", onPress: () => router.push("./login") } // Navigate to 'index' screen
-      ]);
+          Alert.alert("Success", "Account created successfully!", [
+            { text: "OK", onPress: () => router.push("./login") } // Navigate to 'index' screen
+          ]);
+          return;
+        }
+        else if(docSnap.data().name !== name) {
+          Alert.alert("Error", "Account name or details do not match.");
+        }
+        else if(docSnap.data().dob !== dob) {
+          Alert.alert("Error", "Account dob or details do not match.");
+        }
+        else if(docSnap.data().email !== email) {
+          Alert.alert("Error", "Account email or details do not match.");
+        }
+        else if(docSnap.data().mobile !== mobile) {
+          Alert.alert("Error", "Account mobile or details do not match.");
+        }
+        else {
+          Alert.alert("Error", "Account details do not match.");
+        }
+      }
     } catch (error) {
       Alert.alert("Signup Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }
@@ -122,9 +146,9 @@ export default function SignUp() {
       <View style={styles.dobContainer}>
         <Picker selectedValue={selectedMonth} style={styles.picker} onValueChange={setSelectedMonth}>
           <Picker.Item label="Month" value="" />
-          <Picker.Item label="January" value="Jan" />
-          <Picker.Item label="February" value="Feb" />
-          <Picker.Item label="March" value="Mar" />
+          <Picker.Item label="January" value="January" />
+          <Picker.Item label="February" value="Febuary" />
+          <Picker.Item label="March" value="March" />
         </Picker>
         <Picker selectedValue={selectedDay} style={styles.picker} onValueChange={setSelectedDay}>
           <Picker.Item label="Day" value="" />
