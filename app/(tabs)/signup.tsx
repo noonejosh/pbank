@@ -32,7 +32,7 @@ export default function SignUp() {
 
     try {
       //Validate information
-      const docRef = doc(db, "userBankInfo", "users", "accountNumbers", accountNumber);
+      const docRef = doc(db, "userBankInfo", accountNumber);
       const docSnap = await getDoc(docRef);
       const dob = `${selectedMonth} ${selectedDay}, ${selectedYear}`;
       if (docSnap.exists()) { 

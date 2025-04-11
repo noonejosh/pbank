@@ -202,7 +202,7 @@ const HomeScreen = () => {
             setActiveTab("home");
             router.push({
               pathname: "/(tabs)/homepage",
-              params: { uid },
+              params: { uid: uid },
             });
           }}
         >
@@ -216,7 +216,7 @@ const HomeScreen = () => {
             setActiveTab("transfer");
             router.push({
               pathname: "/(tabs)/transferfund",
-              params: { uid },
+              params: { uid: uid },
             });
           }}
         >
@@ -230,7 +230,7 @@ const HomeScreen = () => {
             setActiveTab("history");
             router.push({
               pathname: "/(tabs)/history",
-              params: { uid },
+              params: { uid: uid },
             });
           }}
         >

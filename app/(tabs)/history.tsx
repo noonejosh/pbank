@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,20 +9,47 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { db } from '@/FirebaseConfig';
 
-interface Transaction {
-  type: string;
-  details?: string;
-  amount: string;
-  status: string;
-  transactionId: string;
-  date: string;
-  time: string;
-}
 
 const TransactionHistoryScreen = () => {
   const { uid } = useLocalSearchParams();
-  const [activeTab, setActiveTab] = useState('history'); 
+  const [activeTab, setActiveTab] = useState('history');
+  const [userData, setUserData] = useState<Transaction | null>(null);
+  
+  interface Transaction {
+    type: string;
+    details?: string;
+    amount: string;
+    status: string;
+    transactionId: string;
+    date: string;
+    time: string;
+  }
+  
+  useEffect(() => {
+      const fetchUserInfoDocuments = async () => {
+        if (typeof uid === "string") {
+          const userInfoCollectionRef = collection(db, "users", uid, "userInfo", "history"); // Reference to the userInfo subcollection
+  
+          try {
+            const querySnapshot = await getDocs(userInfoCollectionRef); // Fetch all documents in the subcollection
+            const documents = querySnapshot.docs.map((doc) => ({
+              id: doc.id, // Include the document ID
+              ...doc.data(), // Spread the document data to match the UserData structure
+            }));
+            console.log("Fetched documents:", documents); // Log the fetched documents
+          } catch (error) {
+            console.error("Error fetching documents: ", error);
+          }
+        } else {
+          console.error("Invalid uid:", uid);
+        }
+      };
+  
+      fetchUserInfoDocuments();
+    }, [uid]); // Run the effect when `uid` changes
 
   const transactions: Transaction[] = [
     {
