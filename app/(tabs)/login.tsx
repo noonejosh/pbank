@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import { useRouter, Link } from "expo-router"; 
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../FirebaseConfig"; // Import Firebase auth instance
+import { collection, getDocs, doc, getDoc } from "firebase/firestore"; // Import Firestore functions
+import { auth, db } from "../../FirebaseConfig"; // Import Firestore and Auth instances
 
 export default function Login() {
   const router = useRouter(); // Initialize router for navigation
@@ -28,15 +29,39 @@ export default function Login() {
     }
 
     try {
+      // Authenticate the user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      Alert.alert("Success", "Logged in successfully!");
-      router.push({
-        pathname: "./homepage",
-        params: { 
-          uid: user.uid, // Pass the user ID to the homepage
-        }, 
-      });
+
+      // Fetch the first document under the userInfo subcollection
+      const userInfoCollectionRef = collection(db, "users", user.uid, "userInfo");
+      const querySnapshot = await getDocs(userInfoCollectionRef);
+
+      if (!querySnapshot.empty) {
+        const firstDoc = querySnapshot.docs[0]; // Get the first document
+        const firstDocId = firstDoc.id; // Get the document ID
+
+        // Fetch the user's mobile number using the first document ID
+        const userDocRef = doc(db, "users", user.uid, "userInfo", firstDocId);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          const mobile = userData.mobile; // Get the mobile number from the document
+
+          console.log("User logged in:", mobile); // Log the mobile number for debugging
+
+          // Navigate to the OTP screen with the mobile number
+          router.push({
+            pathname: "./otp",
+            params: { mobile },
+          });
+        } else {
+          Alert.alert("Error", "User data not found in the database.");
+        }
+      } else {
+        Alert.alert("Error", "No documents found in the userInfo subcollection.");
+      }
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }

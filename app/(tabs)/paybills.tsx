@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const PayBillsScreen = () => {
   const router = useRouter();
+  const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
 
   const handleInternetPress = () => {
-    router.push('/internet');
+    router.push({pathname: '/internet', params: { uid }});
   };
 
   const handleWaterPress = () => {

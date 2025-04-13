@@ -1,18 +1,65 @@
+import { auth } from "@/FirebaseConfig";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import React, { useState, useRef } from "react";
+import { signInWithPhoneNumber } from "firebase/auth";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from "react-native";
 
 export default function OTP() {
   const router = useRouter();
-  const { email, name, accountNumber, mobile, dateOfBirth, deposit, isActive } = useLocalSearchParams(); // Get user details from params
-  const [otpArray, setOtpArray] = useState<string[]>(Array(6).fill("")); // State for OTP input
-  const [generatedOtp, setGeneratedOtp] = useState<string>(""); // State to store the generated OTP
-  const inputsRef = useRef<TextInput[]>([]); // Refs for input fields
+  const { mobile } = useLocalSearchParams(); // Get the mobile number from the previous screen
+  const [otpArray, setOtpArray] = useState(["", "", "", "", "", ""]); // State for OTP input
+  const inputsRef = useRef<TextInput[]>([]); // Refs for OTP input fields
+  const [confirmationResult, setConfirmationResult] = useState<any>(null); // To store the confirmation result
 
-  // Generate and send OTP to the user's mobile numbers
-  const sendOtpToMobile = async () => {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
-    setGeneratedOtp(otp); // Store the OTP locally
+  useEffect(() => {
+    sendOtp(); // Automatically call sendOtp when the component loads
+  }, []);
+
+  const sendOtp = async () => {
+    if (!mobile) {
+      Alert.alert("Error", "Mobile number is missing.");
+      return;
+    }
+
+    try {
+      if (typeof mobile === "string") {
+        const confirmationResult = await signInWithPhoneNumber(auth, mobile); // Automatically handles reCAPTCHA
+        setConfirmationResult(confirmationResult); // Save the confirmation result for later verification
+        Alert.alert("Success", "OTP sent to your mobile number.");
+      } else {
+        Alert.alert("Error", "Invalid mobile number format.");
+      }
+      setConfirmationResult(confirmationResult); // Save the confirmation result for later verification
+      Alert.alert("Success", "OTP sent to your mobile number.");
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      Alert.alert("Error", "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const verifyOtp = async () => {
+    const otp = otpArray.join(""); // Combine the OTP digits into a single string
+
+    if (!otp) {
+      Alert.alert("Error", "Please enter the OTP.");
+      return;
+    }
+
+    try {
+      const result = await confirmationResult.confirm(otp); // Verify the OTP
+      const user = result.user;
+      Alert.alert("Success", "Mobile number verified!");
+      router.push({
+        pathname: "./homepage",
+        params: {
+          uid: user.uid, // Pass the user ID to the homepage
+        },
+      });
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      Alert.alert("Error", "Invalid OTP. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -29,12 +76,22 @@ export default function OTP() {
             maxLength={1}
             keyboardType="numeric"
             value={otpArray[index]}
+            onChangeText={(text) => {
+              const newOtpArray = [...otpArray];
+              newOtpArray[index] = text;
+              setOtpArray(newOtpArray);
+
+              // Move to the next input field
+              if (text && index < inputsRef.current.length - 1) {
+                inputsRef.current[index + 1].focus();
+              }
+            }}
           />
         ))}
       </View>
 
       {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton}>
+      <TouchableOpacity style={styles.submitButton} onPress={verifyOtp}>
         <Text style={styles.submitButtonText}>Submit</Text>
       </TouchableOpacity>
     </View>
@@ -90,4 +147,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-}

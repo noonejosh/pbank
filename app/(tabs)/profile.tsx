@@ -22,9 +22,6 @@ export default function ProfileScreen() {
     createdAt?: Date;
   }
 
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [activeTab, setActiveTab] = useState('profile');
-
   useEffect(() => {
     const fetchUserData = async () => {
       if (typeof uid === "string" && typeof accountNumber === "string") {
@@ -45,6 +42,9 @@ export default function ProfileScreen() {
     fetchUserData();
   }, [uid]);
 
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [activeTab, setActiveTab] = useState('profile');
+  
   const formatDeposit = (deposit: string) => {
     const number = parseFloat(deposit);
     if (isNaN(number)) return "0.00";
