@@ -16,11 +16,11 @@ export default function SignUp() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
-  const [deposit] = useState(0); // Initialize deposit state
-  const [isActive, setIsActive] = useState(true); // State for active status
-  const [otp] = useState(0); // Initialize OTP state
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for password visibility
-  const [isPasswordValid, setIsPasswordValid] = useState(false); // State for password validation
+  const [deposit] = useState(0);
+  const [isActive, setIsActive] = useState(true); 
+  const [otp] = useState(0); 
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); 
+  const [isPasswordValid, setIsPasswordValid] = useState(false); 
 
   const router = useRouter(); // Initialize the router
 
@@ -53,6 +53,12 @@ export default function SignUp() {
             createdAt: new Date().toISOString()
           });
 
+          const userID = user.uid; // Get the user ID from Firebase Authentication
+
+          await setDoc(doc(db, "userBankInfo", accountNumber), {
+            userID,
+          }, { merge: true }); // Merge with existing data if needed
+          
           Alert.alert("Success", "Account created successfully!", [
             { text: "OK", onPress: () => router.push("./login") } // Navigate to 'index' screen
           ]);
