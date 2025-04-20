@@ -53,7 +53,7 @@ export default function Login() {
 
           // Navigate to the OTP screen with the mobile number
           router.push({
-            pathname: "./otp",
+            pathname: "./homepage",
             params: { mobile },
           });
         } else {

@@ -28,7 +28,7 @@ const TransferFundsScreen = () => {
   const [activeTab, setActiveTab] = useState('transfer');
   
 
-  const tabs = ['All', 'Transfers', 'Bills Payment'];
+  const tabs = ['All', 'Transfer', 'Bills Payment'];
 
   const recipients: any[] = [];
 
@@ -76,20 +76,33 @@ const TransferFundsScreen = () => {
         <Text style={styles.recipientsTitle}>Saved recipients</Text>
 
         <View style={styles.tabs}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text
-                style={[styles.tabText, activeTab === tab && styles.activeTabText]}
-              >
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  {tabs.map((tab) => (
+    <TouchableOpacity
+      key={tab}
+      style={[styles.tab, activeTab === tab && styles.activeTab]}
+      onPress={() => {
+        setActiveTab(tab);
+        if (tab === 'Transfer') {
+          router.push({
+            pathname: '/(tabs)/transfer',
+            params: { uid },
+          });
+        } else if (tab === 'Bills Payment') {
+          router.push({
+            pathname: '/(tabs)/paybills',
+            params: { uid },
+          });
+        }
+      }}
+    >
+      <Text
+        style={[styles.tabText, activeTab === tab && styles.activeTabText]}
+      >
+        {tab}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
 
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color="gray" />
