@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 
 interface Provider {
@@ -10,6 +10,7 @@ interface Provider {
 
 const StreamingServicesScreen = () => {
   const router = useRouter();
+  const { uid, accountNumber } = useLocalSearchParams();
 
   const providers: Provider[] = [
     { name: 'Netflix', logo: require('../../assets/images/netflix.jpg') }, 
@@ -22,7 +23,7 @@ const StreamingServicesScreen = () => {
   const handleProviderPress = (providerName: string) => {
     router.push({
       pathname: '../BillsPayment',
-      params: { provider: providerName },
+      params: { provider: providerName, uid: uid, accountNumber: accountNumber },
     });
   };
 

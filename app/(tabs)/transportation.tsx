@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 
 interface Provider {
@@ -10,6 +10,7 @@ interface Provider {
 
 const TransportationScreen = () => {
   const router = useRouter();
+  const { uid, accountNumber } = useLocalSearchParams();
 
   const providers: Provider[] = [
     { name: 'Beep™', logo: require('../../assets/images/beep.jpg') },
@@ -23,7 +24,7 @@ const TransportationScreen = () => {
   const handleProviderPress = (providerName: string) => {
     router.push({
       pathname: '../BillsPayment',
-      params: { provider: providerName },
+      params: { provider: providerName, uid: uid, accountNumber: accountNumber },
     });
   };
 

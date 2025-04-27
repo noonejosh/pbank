@@ -16,14 +16,16 @@ import { db } from '@/FirebaseConfig';
 const TransactionHistoryScreen = () => {
   const { uid } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('history');
-  const [userData, setUserData] = useState<Transaction | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   
   interface Transaction {
     type: string;
     details?: string;
+    accountNumber?: string;
+    billAmount?: string;
     amount: string;
-    status: string;
+    convenienceFee?: string;
+    totalAmount?: string;
     transactionId: string;
     date: string;
     time: string;
@@ -38,12 +40,14 @@ const TransactionHistoryScreen = () => {
           const depositRef = collection(db, "users", uid, "userInfo", "history", "deposit");
           const withdrawRef = collection(db, "users", uid, "userInfo", "history", "withdraw");
           const transferRef = collection(db, "users", uid, "userInfo", "history", "transfer");
+          const paybillsRef = collection(db, "users", uid, "userInfo", "history", "paybills");
 
           // Fetch documents from each subcollection
-          const [depositSnapshot, withdrawSnapshot, transferSnapshot] = await Promise.all([
+          const [depositSnapshot, withdrawSnapshot, transferSnapshot, paybillsSnapshot] = await Promise.all([
             getDocs(depositRef),
             getDocs(withdrawRef),
             getDocs(transferRef),
+            getDocs(paybillsRef),
           ]);
 
           // Map documents from each subcollection
@@ -52,7 +56,6 @@ const TransactionHistoryScreen = () => {
             type: "Deposit",
             details: doc.data().details || "",
             amount: doc.data().amount || "0",
-            status: doc.data().status || "Pending",
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
@@ -63,7 +66,6 @@ const TransactionHistoryScreen = () => {
             type: "Withdraw",
             details: doc.data().details || "",
             amount: doc.data().amount || "0",
-            status: doc.data().status || "Pending",
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
@@ -72,16 +74,27 @@ const TransactionHistoryScreen = () => {
           const transferDocs = transferSnapshot.docs.map((doc) => ({
             id: doc.id,
             type: "Transfer",
+            accountNumber: doc.data().accountNumber || "",
             details: doc.data().details || "",
             amount: doc.data().amount || "0",
-            status: doc.data().status || "Pending",
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
           }));
 
+          const paybillsDocs = paybillsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: "Pay Bills",
+            accountNumber: doc.data().accountNumber || "",
+            billAmount: parseFloat(doc.data().billAmount as string).toFixed(2),
+            convenienceFee: parseFloat(doc.data().convenienceFee as string).toFixed(2),
+            totalAmount: parseFloat(doc.data().totalAmount as string).toFixed(2),
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+
           // Combine all transactions
-          const allTransactions = [...depositDocs, ...withdrawDocs, ...transferDocs];
+          const allTransactions = [...depositDocs, ...withdrawDocs, ...transferDocs, ...paybillsDocs];
           console.log("All Transactions:", allTransactions);
 
           // Optionally sort transactions by date or time
@@ -116,7 +129,7 @@ const TransactionHistoryScreen = () => {
       </View>
       <View style={styles.transactionAmount}>
         <Text style={styles.amount}>{item.amount}</Text>
-        <Text style={styles.status}>{item.status}</Text>
+        <Text style={styles.status}>{item.convenienceFee ? `Fee: ${item.convenienceFee}` : 'No Fee'}</Text>
         <Text style={styles.dateTime}>
           {item.date} {item.time}
         </Text>

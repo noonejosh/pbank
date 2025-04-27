@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons'; // Import an icon for the back button
 
 interface Provider {
@@ -10,6 +10,7 @@ interface Provider {
 
 const InternetScreen = () => {
   const router = useRouter();
+  const { uid, accountNumber } = useLocalSearchParams();
 
   const providers: Provider[] = [
     { name: 'PLDT Home', logo: require('../../assets/images/pldt.jpg') },
@@ -19,11 +20,11 @@ const InternetScreen = () => {
     { name: 'Sky Fiber', logo: require('../../assets/images/skyfiber.jpg') },
     { name: 'Red Fiber', logo: require('../../assets/images/redfiber.jpg') },
   ];
-
+  console.log("UID:", uid);
   const handleProviderPress = (providerName: string) => {
     router.push({
       pathname: '../BillsPayment', 
-      params: { provider: providerName },
+      params: { provider: providerName, uid: uid, accountNumber: accountNumber }, // Pass the provider name and other params
     });
   };
 

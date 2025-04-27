@@ -1,24 +1,74 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
+import { addDoc, collection, doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/FirebaseConfig";
 
 const PaymentConfirm = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const { uid, accountNumber, billAmount, accNum, provider} = useLocalSearchParams();
 
-  // Extract values with proper handling
-  const accountNumber = typeof params.accountNumber === "string" ? params.accountNumber : "N/A";
-  const billAmount = typeof params.billAmount === "string" ? parseFloat(params.billAmount) || 0 : 0;
+  interface UserData {
+    uid?: string;
+    deposit?: number;
+  }
+  console.log("UID:", uid);
+  const convenienceFee = parseFloat(billAmount as string) * 0.01; 
+  const totalAmount = parseFloat(billAmount as string) + convenienceFee;
 
-  const convenienceFee = 10.0;
-  const totalAmount = billAmount + convenienceFee;
+  const handlePay = async () => {
+    if (typeof uid === "string" && typeof accountNumber === "string") {
+      const docRef = doc(db, "users", uid, "userInfo", accountNumber);
+      
+      const historyCollectionRef = collection(db, "users", uid, "userInfo", "history", "paybills"); 
+      const randomRef = `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+      try {
+        // Fetch the current deposit
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userData = docSnap.data() as UserData;
+          const currentDeposit = parseFloat(String(userData.deposit || "0"));
+          // Check if the deposit is sufficient
+          if (currentDeposit < totalAmount) {
+            Alert.alert("Error", "Insufficient funds in your deposit.");
+            return;
+          }
 
-  const handlePay = () => {
-    router.push({
-      pathname: "../PaymentSuccessful",
-      params: { totalAmount: totalAmount.toFixed(2) },
-    });
+          // Calculate the new deposit
+          const newDeposit = currentDeposit - totalAmount;
+
+          // Update the deposit in Firestore
+          await updateDoc(docRef, { deposit: newDeposit.toFixed(2) });
+          console.log("Deposit updated successfully.");
+
+          // Add the transaction to the history collection with the generated transaction ID
+          await addDoc(historyCollectionRef, {
+            type: "Pay Bills",
+            randomRef: randomRef,
+            detail: "Payment for " + provider,
+            provider: provider,
+            accountNumber: accountNumber,
+            billAmount: parseFloat(billAmount as string).toFixed(2),
+            convenienceFee: convenienceFee.toFixed(2),
+            totalAmount: totalAmount.toFixed(2),
+            date: new Date().toISOString().split("T")[0],
+            time: new Date().toISOString().split("T")[1],
+          });
+
+          // Navigate to the PaymentSuccessful screen
+          router.push({
+            pathname: "../PaymentSuccessful",
+            params: { uid: uid, totalAmount: totalAmount.toFixed(2), accountNumber: accountNumber, randomRef: randomRef },  
+          });
+        } else {
+          Alert.alert("Error", "No such document found.");
+        }
+      } catch (error) {
+        console.error("Error processing payment:", error);
+        Alert.alert("Error", "Failed to process payment. Please try again.");
+      }
+    }
   };
 
   return (
@@ -35,12 +85,12 @@ const PaymentConfirm = () => {
       <View style={styles.detailsContainer}>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Account Number</Text>
-          <Text style={styles.inputValue}>{accountNumber}</Text>
+          <Text style={styles.inputValue}>{accNum}</Text>
         </View>
 
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Bill Amount</Text>
-          <Text style={styles.inputValue}>₱{billAmount.toFixed(2)}</Text>
+          <Text style={styles.inputValue}>₱{parseFloat(billAmount as string).toFixed(2)}</Text>
         </View>
 
         <View style={styles.detailItem}>
