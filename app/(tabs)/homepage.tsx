@@ -15,7 +15,7 @@ const HomeScreen = () => {
     email?: string;
     mobile?: string;
     dateOfBirth?: Date;
-    createdAt?: Date;
+    createdAt?: Date; 
   }
 
   const [userData, setUserData] = useState<UserData | null>(null);
