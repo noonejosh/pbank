@@ -144,7 +144,7 @@ const LoanScreen = () => {
           <TouchableOpacity style={styles.headerNotificationTouchable}>
               <Ionicons
               name="notifications-outline"
-              size={24} 
+              size={24}
               color="#CDFF57"
               style={styles.headerNotificationIcon}
               />

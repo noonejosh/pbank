@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "left",
     // No need for absolute positioning, left, top, marginTop properties here anymore
-  }, 
+  },
 
   // --- Existing Styles (remain the same) ---
   // You can remove the 'footer' related styles if your footer is in a shared layout file
