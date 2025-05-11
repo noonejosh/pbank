@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
 const HomeScreen = () => {
   const { uid } = useLocalSearchParams();
 
   interface UserData {
-    id?: string; // Document ID
+    id?: string;
     name?: string;
     deposit?: string;
     email?: string;
@@ -25,18 +25,17 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchUserInfoDocuments = async () => {
       if (typeof uid === "string") {
-        const userInfoCollectionRef = collection(db, "users", uid, "userInfo"); // Reference to the userInfo subcollection
+        const userInfoCollectionRef = collection(db, "users", uid, "userInfo");
 
         try {
-          const querySnapshot = await getDocs(userInfoCollectionRef); // Fetch all documents in the subcollection
+          const querySnapshot = await getDocs(userInfoCollectionRef);
           const documents = querySnapshot.docs.map((doc) => ({
-            id: doc.id, // Include the document ID
-            ...doc.data(), // Spread the document data to match the UserData structure
+            id: doc.id,
+            ...doc.data(),
           }));
 
-          // Assuming you want to set the first document as the userData
           if (documents.length > 0) {
-            setUserData(documents[0] as UserData); // Set the first document as userData
+            setUserData(documents[0] as UserData);
           } else {
             console.log("No documents found in userInfo.");
           }
@@ -49,17 +48,16 @@ const HomeScreen = () => {
     };
 
     fetchUserInfoDocuments();
-  }, [uid]); // Run the effect when `uid` changes
+  }, [uid]);
 
   const formatDeposit = (deposit: string) => {
-    const number = parseFloat(deposit); // Convert the deposit to a number
-    if (isNaN(number)) return "0.00"; // Handle invalid numbers
+    const number = parseFloat(deposit);
+    if (isNaN(number)) return "0.00";
     return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
   };
-  
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      {/* Header */}
       <View style={{ backgroundColor: "#111", padding: 20, paddingTop: 50 }}>
         <Text
           style={{
@@ -107,7 +105,6 @@ const HomeScreen = () => {
         CHECKING & SAVINGS
       </Text>
 
-      {/* Account Info */}
       <View
         style={{
           backgroundColor: "#CDFF57",
@@ -139,18 +136,25 @@ const HomeScreen = () => {
         </Text>
       </View>
 
-      {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <View style={{ alignItems: "center" }}>
           <Ionicons name="qr-code-outline" size={32} color="#CDFF57" />
           <Text style={styles.actionText}>Scan QR</Text>
         </View>
-        <Link href="/(tabs)/savings" style={{ alignItems: "center" }}>
+
+        <Link
+          href={{
+            pathname: "/(tabs)/investscreen",
+            params: { uid: uid },
+          }}
+          style={{ alignItems: "center" }}
+        >
           <View style={{ alignItems: "center" }}>
             <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
             <Text style={styles.actionText}>Invest</Text>
           </View>
         </Link>
+
         <TouchableOpacity
           style={{ alignItems: "center" }}
           onPress={() =>
@@ -158,7 +162,7 @@ const HomeScreen = () => {
               pathname: "/(tabs)/paybills",
               params: {
                 uid: uid,
-                accountNumber: userData?.id, // Pass the user ID if needed
+                accountNumber: userData?.id,
               },
             })
           }
@@ -168,15 +172,21 @@ const HomeScreen = () => {
             <Text style={styles.actionText}>Pay Bills</Text>
           </View>
         </TouchableOpacity>
-        <Link href="/(tabs)/savings" style={{ alignItems: "center" }}>
+
+        <Link
+          href={{
+            pathname: "/(tabs)/loanscreen",
+            params: { uid: uid },
+          }}
+          style={{ alignItems: "center" }}
+        >
           <View style={{ alignItems: "center" }}>
-            <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
-            <Text style={styles.actionText}>Savings</Text>
+            <Ionicons name="cash-outline" size={32} color="#CDFF57" />
+            <Text style={styles.actionText}>Loan</Text>
           </View>
         </Link>
       </View>
 
-      {/* Updates Section */}
       <ScrollView
         style={{
           flex: 1,
@@ -194,7 +204,6 @@ const HomeScreen = () => {
         </Text>
       </ScrollView>
 
-      {/* Bottom Navigation - Enhanced */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.navButton, activeTab === "home" && styles.navButtonActive]}
@@ -237,6 +246,7 @@ const HomeScreen = () => {
           <Ionicons name="document-text" size={20} color={activeTab === "history" ? "#CDFF57" : "black"} />
           <Text style={[styles.navLabel, activeTab === "history" && styles.navLabelActive]}>History</Text>
         </TouchableOpacity>
+
 
         <TouchableOpacity
           style={[styles.navButton, activeTab === "profile" && styles.navButtonActive]}
