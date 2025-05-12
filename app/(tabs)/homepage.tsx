@@ -158,7 +158,7 @@ const HomeScreen = () => {
               pathname: "/(tabs)/paybills",
               params: {
                 uid: uid,
-                accountNumber: userData?.id, // Pass the user ID if needed
+                accountNumber: userData?.id, 
               },
             })
           }
