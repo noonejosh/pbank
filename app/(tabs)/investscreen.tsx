@@ -329,4 +329,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InvestScreen;
+export default InvestScreen; 

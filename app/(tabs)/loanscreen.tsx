@@ -493,4 +493,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoanScreen;
+export default LoanScreen; 
