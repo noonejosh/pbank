@@ -166,7 +166,11 @@ const HomeScreen = () => {
               pathname: "/(tabs)/paybills",
               params: {
                 uid: uid,
+<<<<<<< HEAD
+                accountNumber: userData?.id, 
+=======
                 accountNumber: userData?.id,
+>>>>>>> 9ce2281eb55c2ff6ca68c4b60f295e0e260b712d
               },
             })
           }
