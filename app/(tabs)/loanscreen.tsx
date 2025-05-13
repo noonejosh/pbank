@@ -1,10 +1,19 @@
 // app/(tabs)/loanscreen.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../FirebaseConfig';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../FirebaseConfig'; // Ensure this path is correct
+
+interface PaymentEntry {
+  id: string;
+  amountDue: number;
+  dueDate: string;
+  interestPay: string;
+  status?: 'pending' | 'paid';
+  paidDate?: string;
+}
 
 interface LoanData {
   id: string;
@@ -21,12 +30,7 @@ interface LoanData {
   accountNumber?: string;
   balanceRemaining?: number;
   paymentPercentage?: number;
-  payments?: Array<{
-    id: string;
-    amountDue: number;
-    dueDate: string;
-    interestPay: string;
-  }>;
+  // Removed payments?: PaymentEntry[]; as per your Firebase structure
 }
 
 interface UserData {
@@ -37,98 +41,161 @@ interface UserData {
   mobile?: string;
   dateOfBirth?: Date;
   createdAt?: Date;
+  accountNumber?: string;
 }
+
+const formatCurrency = (amount: number | string | undefined) => {
+  if (amount === undefined || amount === null) return "₱ 0.00";
+  const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
+  if (isNaN(numAmount)) return "₱ 0.00";
+  return `₱ ${new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numAmount)}`;
+};
 
 const LoanScreen = () => {
   const { uid } = useLocalSearchParams();
-  const [loanData, setLoanData] = useState<LoanData | null>(null);
+  const [activeOverdueLoans, setActiveOverdueLoans] = useState<LoanData[]>([]);
+  const [pendingLoanApplications, setPendingLoanApplications] = useState<LoanData[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCombinedLoanAmount, setTotalCombinedLoanAmount] = useState<number>(0);
+  const [totalCombinedBalanceRemaining, setTotalCombinedBalanceRemaining] = useState<number>(0);
+  const [overallPaymentPercentage, setOverallPaymentPercentage] = useState<number>(0);
+
+  const fetchUserData = useCallback(async (userId: string) => {
+    try {
+      const userInfoCollectionRef = collection(db, `users/${userId}/userInfo`);
+      const userInfoQuerySnapshot = await getDocs(userInfoCollectionRef);
+      if (!userInfoQuerySnapshot.empty) {
+        const userInfoDoc = userInfoQuerySnapshot.docs[0];
+        setUserData({
+          id: userInfoDoc.id,
+          accountNumber: userInfoDoc.id,
+          ...userInfoDoc.data() as UserData,
+        });
+      } else {
+        setUserData({ name: 'User', accountNumber: 'N/A' });
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setError('Failed to load user information.');
+    }
+  }, []);
+
+  const fetchLoanData = useCallback(async (userId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const loansCollectionRef = collection(db, `users/${userId}/loanApplications`);
+      const querySnapshot = await getDocs(loansCollectionRef);
+
+      let tempActiveOverdueLoans: LoanData[] = [];
+      let tempPendingLoanApplications: LoanData[] = [];
+      let currentCombinedLoanAmount = 0;
+      let currentCombinedBalanceRemaining = 0;
+      let currentTotalPaidAcrossAllLoans = 0;
+      let currentTotalPayableAcrossAllLoans = 0;
+
+      if (!querySnapshot.empty) {
+        querySnapshot.docs.forEach((doc) => {
+          const loan = { id: doc.id, ...doc.data() } as LoanData;
+          if (loan.status === 'active' || loan.status === 'overdue') {
+            if (loan.loanAmount) currentCombinedLoanAmount += loan.loanAmount;
+            if (loan.balanceRemaining) currentCombinedBalanceRemaining += loan.balanceRemaining;
+            if (loan.totalPaid) currentTotalPaidAcrossAllLoans += loan.totalPaid;
+            if (loan.totalPayable) currentTotalPayableAcrossAllLoans += loan.totalPayable;
+            tempActiveOverdueLoans.push(loan);
+          } else if (loan.status === 'pending') {
+            tempPendingLoanApplications.push(loan);
+          }
+        });
+      }
+
+      setActiveOverdueLoans(tempActiveOverdueLoans);
+      setPendingLoanApplications(tempPendingLoanApplications);
+      setTotalCombinedLoanAmount(currentCombinedLoanAmount);
+      setTotalCombinedBalanceRemaining(currentCombinedBalanceRemaining);
+
+      if (currentTotalPayableAcrossAllLoans > 0) {
+        const percentage = (currentTotalPaidAcrossAllLoans / currentTotalPayableAcrossAllLoans) * 100;
+        setOverallPaymentPercentage(parseFloat(percentage.toFixed(2)));
+      } else {
+        setOverallPaymentPercentage(0);
+      }
+
+      console.log("Active Overdue Loans:", tempActiveOverdueLoans);
+      console.log("Pending Loan Applications:", tempPendingLoanApplications);
+
+    } catch (err) {
+      console.error("Error fetching loan data:", err);
+      setError('Failed to load loan details. Please check your internet connection.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!uid || typeof uid !== 'string') {
-        setError('User ID not found. Please log in again.');
-        setLoading(false);
-        return;
-      }
+    if (uid) {
+      const userId = Array.isArray(uid) ? uid[0] : uid;
+      fetchUserData(userId);
+      fetchLoanData(userId);
+    } else {
+      setError('User ID not found. Please log in again.');
+      setLoading(false);
+    }
+  }, [uid, fetchUserData, fetchLoanData]);
 
-      try {
-        const userInfoCollectionRef = collection(db, `users/${uid}/userInfo`);
-        const userInfoQuerySnapshot = await getDocs(userInfoCollectionRef);
-        if (!userInfoQuerySnapshot.empty) {
-          setUserData(userInfoQuerySnapshot.docs[0].data() as UserData);
-        } else {
-          setUserData({ name: "User" });
-        }
-
-        const loansCollectionRef = collection(db, `users/${uid}/loans`);
-        const querySnapshot = await getDocs(loansCollectionRef);
-
-        let activeLoan = null;
-        if (!querySnapshot.empty) {
-          activeLoan = querySnapshot.docs.find(doc => (doc.data() as LoanData).status === 'active' || (doc.data() as LoanData).status === 'overdue' || (doc.data() as LoanData).status === 'pending');
-        }
-
-        if (activeLoan) {
-          const rawData = activeLoan.data() as LoanData;
-          setLoanData({
-            id: activeLoan.id,
-            loanAmount: rawData.loanAmount,
-            purpose: rawData.purpose,
-            tenureMonths: rawData.tenureMonths,
-            emiAmount: rawData.emiAmount,
-            nextDueDate: rawData.nextDueDate,
-            disbursementDate: rawData.disbursementDate,
-            interestRate: rawData.interestRate,
-            totalPayable: rawData.totalPayable,
-            totalPaid: rawData.totalPaid,
-            status: rawData.status,
-            accountNumber: rawData.accountNumber,
-            balanceRemaining: rawData.balanceRemaining,
-            paymentPercentage: rawData.paymentPercentage,
-            payments: rawData.payments,
-          } as LoanData);
-        } else {
-          setLoanData(null);
-        }
-
-      } catch (err) {
-        setError('Failed to load details. Please check your internet connection.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  const navigateToRequestLoan = useCallback(() => {
+    router.push({ pathname: "/(tabs)/requestloan", params: { uid } });
   }, [uid]);
 
-  const formatCurrency = (amount: number | string | undefined) => {
-    if (amount === undefined || amount === null) return "₹ 0.00";
-    const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
-    if (isNaN(numAmount)) return "₹ 0.00";
-    return `₹ ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numAmount)}`;
-  };
-
-  const navigateToRequestLoan = () => {
+  const handlePayNow = useCallback((loan: { id: string }, payment: { id: string; amountDue: number; dueDate: string; interestPay: string }) => {
+    if (!uid || !loan.id) {
+      Alert.alert("Error", "User ID or Loan ID is missing. Cannot proceed with payment.");
+      return;
+    }
     router.push({
-      pathname: "/(tabs)/requestloan",
-      params: { uid: uid }
+      pathname: "/(tabs)/paymentscreen",
+      params: {
+        uid,
+        loanId: loan.id,
+        // We don't have a specific paymentId in this structure
+        amountDue: payment.amountDue.toString(),
+        dueDate: payment.dueDate,
+        interestPay: payment.interestPay,
+      }
     });
-  };
-
-  const handleResolveNow = (paymentId: string) => {
-    console.log(`Resolve Now clicked for payment: ${paymentId}`);
-  };
+  }, [uid, router]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#CDFF57" />
         <Text style={styles.loadingText}>Loading loan details...</Text>
       </View>
     );
   }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerMainContainer}>
+          <TouchableOpacity style={styles.headerBackBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#CDFF57" />
+          </TouchableOpacity>
+          <Image source={require('../../assets/images/logo.png')} style={styles.headerLogo} />
+        </View>
+        <View style={styles.noLoanContainer}>
+          <Ionicons name="information-circle-outline" size={80} color="#FF6347" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const hasActiveOrOverdueLoans = activeOverdueLoans.length > 0;
+  const hasPendingLoans = pendingLoanApplications.length > 0;
+  const hasAnyLoanData = hasActiveOrOverdueLoans || hasPendingLoans;
 
   return (
     <View style={styles.container}>
@@ -139,76 +206,135 @@ const LoanScreen = () => {
           </TouchableOpacity>
           <Image source={require('../../assets/images/logo.png')} style={styles.headerLogo} />
           <Text style={styles.headerWelcomeText}>
-            Future Funded, {userData?.name || "User"}!
+            Good Morning, {userData?.name || "User"}!
           </Text>
+          <Image
+            source={{ uri: 'https://via.placeholder.com/40' }} // Replace with actual user profile image URI
+            style={styles.profileImage}
+          />
           <TouchableOpacity style={styles.headerNotificationTouchable}>
-              <Ionicons
+            <Ionicons
               name="notifications-outline"
               size={24}
               color="#CDFF57"
               style={styles.headerNotificationIcon}
-              />
+            />
           </TouchableOpacity>
         </View>
       </View>
 
-      {error || !loanData ? (
+      {!hasAnyLoanData ? (
         <View style={styles.noLoanContainer}>
           <Ionicons name="information-circle-outline" size={80} color="#CDFF57" />
-          <Text style={styles.noLoanText}>No active loan found.</Text>
-          <Text style={styles.noLoanSubText}>It looks like you don't have any active loans with Powered Bank. Request a new loan to get started!</Text>
+          <Text style={styles.noLoanText}>No active loans or pending applications found.</Text>
+          <Text style={styles.noLoanSubText}>It looks like you don't have any active loans with Powered Bank or any pending loan applications. Request a new loan to get started!</Text>
           <TouchableOpacity style={styles.requestLoanButton} onPress={navigateToRequestLoan}>
             <Text style={styles.requestLoanButtonText}>Request New Loan</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <ScrollView style={styles.contentArea}>
-          <View style={styles.loanSummaryCard}>
-            <View style={styles.bankLogoContainer}>
-              <Image source={require('../../assets/images/logo.png')} style={styles.bankLogo} />
-              <Text style={styles.bankName}>Powered Bank</Text>
-            </View>
-            <Text style={styles.loanAmountTitle}>Amount of Loan</Text>
-            <Text style={styles.loanAmountValue}>{formatCurrency(loanData.loanAmount)}</Text>
-            <View style={styles.accountInfoRow}>
-              <Text style={styles.accountLabel}>Account Number</Text>
-              <Text style={styles.accountValue}>**** **** {userData?.id?.slice(-5) || 'XXXXX'}</Text>
-            </View>
-            <View style={styles.balanceRow}>
-              <View>
-                <Text style={styles.balanceLabel}>Balance Remaining</Text>
-                <Text style={styles.balanceValue}>{formatCurrency(loanData.balanceRemaining)}</Text>
+          {hasActiveOrOverdueLoans && (
+            <View style={styles.loanSummaryCard}>
+              <View style={styles.bankLogoContainer}>
+                <Image source={require('../../assets/images/logo.png')} style={styles.bankLogo} />
+                <Text style={styles.bankName}>Powered Bank</Text>
               </View>
-              <View style={styles.paymentPercentageContainer}>
-                <Text style={styles.paymentPercentageLabel}>Payment in Percentage</Text>
-                <Text style={styles.paymentPercentageValue}>{loanData.paymentPercentage || 0}%</Text>
+              <Text style={styles.loanAmountTitle}>Amount of Loan</Text>
+              <Text style={styles.loanAmountValue}>{formatCurrency(totalCombinedLoanAmount)}</Text>
+              <View style={styles.accountInfoRow}>
+                <Text style={styles.accountLabel}>Account Number</Text>
+                <Text style={styles.accountValue}>
+                  {userData?.accountNumber ? `**** **** ${userData.accountNumber.slice(-5)}` : 'XXXXX'}
+                </Text>
               </View>
-            </View>
-          </View>
-          <Text style={styles.sectionTitle}>Loan Payment</Text>
-          {loanData.payments && loanData.payments.length > 0 ? (
-            loanData.payments.map((payment) => (
-              <View key={payment.id} style={styles.paymentRowCard}>
-                <View style={styles.paymentDetails}>
-                  <Text style={styles.paymentAmountDue}>{formatCurrency(payment.amountDue)}</Text>
-                  <Text style={styles.paymentDueDate}>Due Date: {payment.dueDate}</Text>
+              <View style={styles.balanceRow}>
+                <View>
+                  <Text style={styles.balanceLabel}>Balance Remaining</Text>
+                  <Text style={styles.balanceValue}>{formatCurrency(totalCombinedBalanceRemaining)}</Text>
                 </View>
-                <View style={styles.paymentInterestContainer}>
-                  <Text style={styles.paymentInterestLabel}>Interest Pay</Text>
-                  <Text style={styles.paymentInterestValue}>{payment.interestPay}</Text>
+                <View style={styles.paymentPercentageContainer}>
+                  <Text style={styles.paymentPercentageLabel}>Payment in Percentage</Text>
+                  <Text style={styles.paymentPercentageValue}>{overallPaymentPercentage || 0}%</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.resolveButton}
-                  onPress={() => handleResolveNow(payment.id)}
-                >
-                  <Text style={styles.resolveButtonText}>Resolve Now</Text>
-                </TouchableOpacity>
               </View>
-            ))
-          ) : (
-            <Text style={styles.noPaymentsText}>No payment history available.</Text>
+            </View>
           )}
+
+          {hasActiveOrOverdueLoans && (
+            <>
+              <Text style={styles.sectionTitle}>Your Loans</Text>
+              {activeOverdueLoans.map((loan) => (
+                <View key={`loan-${loan.id}`} style={styles.individualLoanCard}>
+                  <View style={styles.loanInfo}>
+                    <Text style={styles.loanPurpose}>Purpose: {loan.purpose || 'Loan'}</Text>
+                    <Text style={styles.loanAmount}>Amount: {formatCurrency(loan.loanAmount)}</Text>
+                    <Text style={styles.loanInterest}>
+                      Interest Rate: {loan.interestRate !== undefined && loan.interestRate !== null
+                        ? `${(loan.interestRate * 100).toFixed(0)}%` // Display as percentage
+                        : 'N/A'}
+                    </Text>
+                  </View>
+                  {loan.nextDueDate && (
+                    <View style={styles.paymentDetailsCard}>
+                      <Text style={styles.paymentDueDate}>Due Date: {loan.nextDueDate}</Text>
+                      <Text style={styles.paymentAmountDue}>EMI: {formatCurrency(loan.emiAmount)}</Text>
+                      <TouchableOpacity
+                      style={styles.resolveButton}
+                      onPress={() => {
+                        if (loan.nextDueDate) {
+                          handlePayNow({ id: loan.id }, { id: 'nextPayment', amountDue: loan.emiAmount || 0, dueDate: loan.nextDueDate, interestPay: loan.interestRate?.toString() || '0' });
+                        } else {
+                          Alert.alert("Error", "Due date is not available for this loan.");
+                        }
+                      }}
+                    >
+                      <Text style={styles.resolveButtonText}>Resolve Now</Text>
+                    </TouchableOpacity>
+                    </View>
+                  )}
+                  {!loan.nextDueDate && loan.status === 'active' && (
+                    <View style={styles.noUpcomingPayment}>
+                      <Ionicons name="checkmark-circle-outline" size={30} color="#CDFF57" />
+                      <Text style={styles.noUpcomingPaymentText}>No upcoming payments scheduled</Text>
+                    </View>
+                  )}
+                  {loan.status === 'overdue' && (
+                    <View style={styles.overdueIndicator}>
+                      <Ionicons name="warning-outline" size={30} color="#FF6347" />
+                      <Text style={styles.overdueText}>Overdue</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </>
+          )}
+
+          {hasPendingLoans && (
+            <>
+              <Text style={styles.sectionTitle}>Pending Loan Applications</Text>
+              {pendingLoanApplications.map((loan) => (
+                <View key={`loan-pending-${loan.id}`} style={styles.pendingLoanCard}>
+                  <View style={styles.pendingLoanDetails}>
+                    <Text style={styles.pendingLoanTitle}>Purpose: {loan.purpose || 'N/A'}</Text>
+                    <Text style={styles.pendingLoanAmount}>Amount: {formatCurrency(loan.loanAmount)}</Text>
+                    <Text style={styles.pendingLoanStatus}>Status: {loan.status ? loan.status.charAt(0).toUpperCase() + loan.status.slice(1) : 'N/A'}</Text>
+                  </View>
+                  <View style={styles.pendingLoanInfoTextContainer}>
+                    <Ionicons name="information-circle-outline" size={20} color="#CDFF57" />
+                    <Text style={styles.pendingLoanInfoText}>Awaiting acceptance/disbursement.</Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
           <View style={styles.bottomSpacer} />
+          {hasAnyLoanData && (
+            <TouchableOpacity style={styles.requestLoanButtonBottom} onPress={navigateToRequestLoan}>
+              <Text style={styles.requestLoanButtonText}>Request New Loan</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       )}
     </View>
@@ -230,6 +356,8 @@ const styles = StyleSheet.create({
     color: '#CDFF57',
     textAlign: 'center',
     fontSize: 16,
+    marginTop: 10,
+    fontWeight: 'bold',
   },
   errorText: {
     color: '#FF6347',
@@ -243,8 +371,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#000',
   },
-
-  // Header Styles
   headerMainContainer: {
     backgroundColor: "#111",
     paddingHorizontal: 20,
@@ -257,12 +383,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    flex: 1,
   },
   headerBackBtn: {
     marginRight: 10,
@@ -280,14 +409,19 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginLeft: 10,
   },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginLeft: 10,
+    marginRight: 5,
+  },
   headerNotificationTouchable: {
     padding: 5,
   },
   headerNotificationIcon: {
     marginLeft: 10,
   },
-
-  // Loan Summary Card Styles
   loanSummaryCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 15,
@@ -374,18 +508,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 5,
   },
-
-  // Loan Payment Section Styles
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#CDFF57',
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  paymentRowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  individualLoanCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 15,
@@ -398,12 +521,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
   },
-  paymentDetails: {
-    flex: 1,
-    marginRight: 10,
+  loanInfo: {
+    marginBottom: 10,
+  },
+  loanPurpose: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 5,
+  },
+  loanAmount: {
+    fontSize: 14,
+    color: '#CDFF57',
+  },
+  loanInterest: {
+    fontSize: 13,
+    color: '#AAA',
+    marginBottom: 10,
+  },
+  paymentDetailsCard: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: '#333',
   },
   paymentAmountDue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFF',
     marginBottom: 5,
@@ -411,27 +554,10 @@ const styles = StyleSheet.create({
   paymentDueDate: {
     fontSize: 13,
     color: '#AAA',
-  },
-  paymentInterestContainer: {
-    alignItems: 'center',
-    marginRight: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: 'rgba(205, 255, 87, 0.1)',
-  },
-  paymentInterestLabel: {
-    fontSize: 11,
-    color: '#CDFF57',
-    opacity: 0.7,
-  },
-  paymentInterestValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#CDFF57',
+    marginBottom: 5,
   },
   resolveButton: {
-    backgroundColor: '#CDFF57',
+    backgroundColor: '#2A374B',
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 8,
@@ -439,12 +565,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resolveButtonText: {
-    color: '#000',
+    color: '#CDFF57',
     fontSize: 14,
     fontWeight: 'bold',
   },
-
-  // No Loan Found State Styles
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#CDFF57',
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  pendingLoanCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(205, 255, 87, 0.1)',
+  },
+  pendingLoanDetails: {
+    marginBottom: 10,
+  },
+  pendingLoanTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 5,
+  },
+  pendingLoanAmount: {
+    fontSize: 14,
+    color: '#CDFF57',
+    marginBottom: 5,
+  },
+  pendingLoanStatus: {
+    fontSize: 13,
+    color: '#AAA',
+  },
+  pendingLoanInfoTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    backgroundColor: 'rgba(205, 255, 87, 0.1)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  pendingLoanInfoText: {
+    color: '#CDFF57',
+    fontSize: 12,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
   noLoanContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -477,19 +654,43 @@ const styles = StyleSheet.create({
     borderColor: '#CDFF57',
     marginTop: 20,
   },
+  requestLoanButtonBottom: {
+    backgroundColor: 'transparent',
+    paddingVertical: 18,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#CDFF57',
+    marginTop: 30,
+    marginBottom: 20,
+  },
   requestLoanButtonText: {
     color: '#CDFF57',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  noPaymentsText: {
-    color: '#AAA',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 14,
-  },
   bottomSpacer: {
     height: 20,
+  },
+  noUpcomingPayment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  noUpcomingPaymentText: {
+    color: '#CDFF57',
+    marginLeft: 8,
+  },
+  overdueIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  overdueText: {
+    color: '#FF6347',
+    marginLeft: 8,
+    fontWeight: 'bold',
   },
 });
 

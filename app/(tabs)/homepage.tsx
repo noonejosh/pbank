@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router, useLocalSearchParams } from "expo-router";
+// Removed 'Link' from import
+import { router, useLocalSearchParams } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
@@ -15,7 +16,7 @@ const HomeScreen = () => {
     email?: string;
     mobile?: string;
     dateOfBirth?: Date;
-    createdAt?: Date; 
+    createdAt?: Date;
   }
 
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -142,18 +143,21 @@ const HomeScreen = () => {
           <Text style={styles.actionText}>Scan QR</Text>
         </View>
 
-        <Link
-          href={{
-            pathname: "/(tabs)/investscreen",
-            params: { uid: uid },
-          }}
+        {/* Changed Link to TouchableOpacity with router.push */}
+        <TouchableOpacity
           style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/investscreen",
+              params: { uid: uid },
+            })
+          }
         >
           <View style={{ alignItems: "center" }}>
             <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
             <Text style={styles.actionText}>Invest</Text>
           </View>
-        </Link>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={{ alignItems: "center" }}
@@ -173,18 +177,21 @@ const HomeScreen = () => {
           </View>
         </TouchableOpacity>
 
-        <Link
-          href={{
-            pathname: "/(tabs)/loanscreen",
-            params: { uid: uid },
-          }}
+        {/* Changed Link to TouchableOpacity with router.push */}
+        <TouchableOpacity
           style={{ alignItems: "center" }}
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/loanscreen",
+              params: { uid: uid },
+            })
+          }
         >
           <View style={{ alignItems: "center" }}>
             <Ionicons name="cash-outline" size={32} color="#CDFF57" />
             <Text style={styles.actionText}>Loan</Text>
           </View>
-        </Link>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -246,7 +253,6 @@ const HomeScreen = () => {
           <Ionicons name="document-text" size={20} color={activeTab === "history" ? "#CDFF57" : "black"} />
           <Text style={[styles.navLabel, activeTab === "history" && styles.navLabelActive]}>History</Text>
         </TouchableOpacity>
-
 
         <TouchableOpacity
           style={[styles.navButton, activeTab === "profile" && styles.navButtonActive]}
@@ -332,4 +338,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;
