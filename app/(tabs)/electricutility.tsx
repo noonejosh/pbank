@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
 
 interface Provider {
@@ -10,6 +10,7 @@ interface Provider {
 
 const ElectricUtilityScreen = () => {
   const router = useRouter();
+  const { uid, accountNumber } = useLocalSearchParams();
 
   const providers: Provider[] = [
     { name: 'ATECO - Acess to Energy for comm.', logo: require('../../assets/images/ateco.png') }, 
@@ -22,7 +23,7 @@ const ElectricUtilityScreen = () => {
   const handleProviderPress = (providerName: string) => {
     router.push({
       pathname: '../BillsPayment',
-      params: { provider: providerName },
+      params: { provider: providerName, uid: uid, accountNumber: accountNumber },
     });
   };
 

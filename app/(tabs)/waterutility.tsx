@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons'; // Import an icon for the back button
 
 interface Provider {
@@ -10,6 +10,7 @@ interface Provider {
 
 const WaterUtilityScreen = () => {
   const router = useRouter();
+  const { uid, accountNumber } = useLocalSearchParams();
 
   const providers: Provider[] = [
     { name: 'Angat Water District', logo: require('../../assets/images/angatwater.jpg') }, 
@@ -22,7 +23,7 @@ const WaterUtilityScreen = () => {
   const handleProviderPress = (providerName: string) => {
     router.push({
       pathname: '../BillsPayment', 
-      params: { provider: providerName },
+      params: { provider: providerName, uid: uid, accountNumber: accountNumber },
     });
   };
 

@@ -6,16 +6,11 @@ import { AntDesign } from "@expo/vector-icons";
 const PaymentSuccessful = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { totalAmount, randomRef, accountNumber } = params;
 
-  // Ensure totalAmount is a valid number
-  const totalAmountString = Array.isArray(params.totalAmount)
-    ? params.totalAmount[0]
-    : params.totalAmount || "0";
-  const totalAmount = `₱${parseFloat(totalAmountString).toFixed(2)}`;
 
   // State for Date & Time
   const [dateTime, setDateTime] = useState("");
-  const [referenceNumber, setReferenceNumber] = useState("");
 
   useEffect(() => {
     // Generate Current Date & Time
@@ -31,9 +26,6 @@ const PaymentSuccessful = () => {
     });
     setDateTime(formattedDate);
 
-    // Generate Random Reference Number
-    const randomRef = `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
-    setReferenceNumber(randomRef);
   }, []);
 
   return (
@@ -53,7 +45,7 @@ const PaymentSuccessful = () => {
       <View style={styles.transactionDetails}>
         <Text style={styles.detailsLabel}>Transaction Details</Text>
         <Text style={styles.detailsText}>{dateTime}</Text>
-        <Text style={styles.detailsText}>Ref: {referenceNumber}</Text>
+        <Text style={styles.detailsText}>Ref: {randomRef}</Text>
       </View>
 
       {/* Bill Amount */}
@@ -66,7 +58,7 @@ const PaymentSuccessful = () => {
       <View style={styles.fundsFrom}>
         <Text style={styles.fundsFromLabel}>Funds From:</Text>
         <Text style={styles.fundsFromText}>DEBIT ACCOUNT</Text>
-        <Text style={styles.fundsFromText}>Account Number: *****12345</Text>
+        <Text style={styles.fundsFromText}>Account Number: {accountNumber} </Text>
       </View>
 
       {/* New Payment Button */}

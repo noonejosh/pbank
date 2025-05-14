@@ -5,38 +5,39 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const PayBillsScreen = () => {
   const router = useRouter();
-  const { uid } = useLocalSearchParams(); // Get the UID from the URL parameters
+  const { uid, accountNumber } = useLocalSearchParams(); 
+  console.log("UID:", uid);
 
   const handleInternetPress = () => {
-    router.push({pathname: '/internet', params: { uid }});
+    router.push({pathname: '/internet', params: { uid:uid, accountNumber: accountNumber }});
   };
 
   const handleWaterPress = () => {
-    router.push('/waterutility');
+    router.push({pathname: '/waterutility', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   const handleElectricPress = () => {
-    router.push('/electricutility');
+    router.push({pathname: '/electricutility', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   const handleTransportationPress = () => {
-    router.push('/transportation');
+    router.push({pathname: '/transportation', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   const handleStreamingPress = () => {
-    router.push('/streamingservice');
+    router.push({pathname: '/streamingservice', params: { uid:uid, accountNumber: accountNumber }});
   };
 
   const handleGameCreditsPress = () => {
-    router.push('/gamecredit');
+    router.push({pathname: '/gamecredit', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   const handleTvCableBillsPress = () => {
-    router.push('/cables');
+    router.push({pathname: '/cables', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   const handleDirectSendPress = () => {
-    router.push('/BillsPayment');
+    router.push({pathname: '/BillsPayment', params: { uid:uid, accountNumber: accountNumber  }});
   };
 
   return (

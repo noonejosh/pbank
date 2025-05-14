@@ -8,26 +8,31 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 
 const BillsPayment = () => {
   const router = useRouter();
-  const [accountNumber, setAccountNumber] = useState("");
-  const [billAmount, setBillAmount] = useState("");
+  const { provider, uid, accountNumber } = useLocalSearchParams();
+  const [accNum, setAccountNumber] = useState("");
+  const [amount, setAmount] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
+
   const handleContinue = () => {
-    if (!accountNumber || !billAmount || !fullName || !email) {
+    if (!accNum || !amount || !fullName || !email) {
       Alert.alert("Missing Fields", "Please fill in all fields.");
       return;
     }
     router.push({
       pathname: "../PaymentConfirm",
       params: {
-        accountNumber,
-        billAmount,
+        uid: uid,
+        accountNumber: accountNumber,
+        amount,
+        accNum: accNum,
+        provider: provider,
       },
     });
     
@@ -53,7 +58,7 @@ const BillsPayment = () => {
           style={styles.input}
           placeholder="Enter Account Number"
           placeholderTextColor="#888"
-          value={accountNumber}
+          value={accNum}
           onChangeText={setAccountNumber}
           keyboardType="numeric"
         />
@@ -65,8 +70,8 @@ const BillsPayment = () => {
           style={styles.input}
           placeholder="Enter Bill Amount"
           placeholderTextColor="#888"
-          value={billAmount}
-          onChangeText={setBillAmount}
+          value={amount}
+          onChangeText={setAmount}
           keyboardType="numeric"
         />
       </View>

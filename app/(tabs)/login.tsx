@@ -33,7 +33,12 @@ export default function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Fetch the first document under the userInfo subcollection
+      router.push({
+        pathname: "./homepage",
+        params: { uid: user.uid }, // Pass the user ID
+      });
+
+      /*// Fetch the first document under the userInfo subcollection
       const userInfoCollectionRef = collection(db, "users", user.uid, "userInfo");
       const querySnapshot = await getDocs(userInfoCollectionRef);
 
@@ -49,8 +54,6 @@ export default function Login() {
           const userData = userDocSnap.data();
           const mobile = userData.mobile; // Get the mobile number from the document
 
-          console.log("User logged in:", mobile); // Log the mobile number for debugging
-
           // Navigate to the OTP screen with the mobile number
           router.push({
             pathname: "./homepage",
@@ -61,7 +64,7 @@ export default function Login() {
         }
       } else {
         Alert.alert("Error", "No documents found in the userInfo subcollection.");
-      }
+      }*/
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }
