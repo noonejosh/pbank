@@ -15,13 +15,13 @@ const BillsPayment = () => {
   const router = useRouter();
   const { provider, uid, accountNumber } = useLocalSearchParams();
   const [accNum, setAccountNumber] = useState("");
-  const [billAmount, setBillAmount] = useState("");
+  const [amount, setAmount] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
 
   const handleContinue = () => {
-    if (!accNum || !billAmount || !fullName || !email) {
+    if (!accNum || !amount || !fullName || !email) {
       Alert.alert("Missing Fields", "Please fill in all fields.");
       return;
     }
@@ -30,7 +30,7 @@ const BillsPayment = () => {
       params: {
         uid: uid,
         accountNumber: accountNumber,
-        billAmount,
+        amount,
         accNum: accNum,
         provider: provider,
       },
@@ -70,8 +70,8 @@ const BillsPayment = () => {
           style={styles.input}
           placeholder="Enter Bill Amount"
           placeholderTextColor="#888"
-          value={billAmount}
-          onChangeText={setBillAmount}
+          value={amount}
+          onChangeText={setAmount}
           keyboardType="numeric"
         />
       </View>

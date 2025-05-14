@@ -7,15 +7,15 @@ import { db } from "@/FirebaseConfig";
 
 const PaymentConfirm = () => {
   const router = useRouter();
-  const { uid, accountNumber, billAmount, accNum, provider} = useLocalSearchParams();
+  const { uid, accountNumber, amount, accNum, provider} = useLocalSearchParams();
 
   interface UserData {
     uid?: string;
     deposit?: number;
   }
   console.log("UID:", uid);
-  const convenienceFee = parseFloat(billAmount as string) * 0.01; 
-  const totalAmount = parseFloat(billAmount as string) + convenienceFee;
+  const convenienceFee = parseFloat(amount as string) * 0.01;
+  const totalAmount = parseFloat(amount as string) + convenienceFee;
 
   const handlePay = async () => {
     if (typeof uid === "string" && typeof accountNumber === "string") {
@@ -49,7 +49,7 @@ const PaymentConfirm = () => {
             detail: "Payment for " + provider,
             provider: provider,
             accountNumber: accountNumber,
-            billAmount: parseFloat(billAmount as string).toFixed(2),
+            billAmount: parseFloat(amount as string).toFixed(2),
             convenienceFee: convenienceFee.toFixed(2),
             totalAmount: totalAmount.toFixed(2),
             date: new Date().toISOString().split("T")[0],
@@ -90,7 +90,7 @@ const PaymentConfirm = () => {
 
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Bill Amount</Text>
-          <Text style={styles.inputValue}>₱{parseFloat(billAmount as string).toFixed(2)}</Text>
+          <Text style={styles.inputValue}>₱{parseFloat(amount as string).toFixed(2)}</Text>
         </View>
 
         <View style={styles.detailItem}>
