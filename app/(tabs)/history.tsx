@@ -52,41 +52,40 @@ const TransactionHistoryScreen = () => {
 
           // Map documents from each subcollection
           const depositDocs = depositSnapshot.docs.map((doc) => ({
-            id: doc.id,
+            transactionId: doc.id,
             type: "Deposit",
             details: doc.data().details || "",
-            amount: doc.data().amount || "0",
-            transactionId: doc.id,
+            totalAmount: doc.data().totalAmount,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
           }));
 
           const withdrawDocs = withdrawSnapshot.docs.map((doc) => ({
-            id: doc.id,
+            transactionsId: doc.id,
             type: "Withdraw",
             details: doc.data().details || "",
-            amount: doc.data().amount || "0",
+            totalAmount: doc.data().totalAmount,
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
           }));
 
           const transferDocs = transferSnapshot.docs.map((doc) => ({
-            id: doc.id,
+            transactionsId: doc.id,
             type: "Transfer",
             accountNumber: doc.data().accountNumber || "",
             details: doc.data().details || "",
-            amount: doc.data().amount || "0",
+            amount: doc.data().totalAmount,
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
           }));
 
           const paybillsDocs = paybillsSnapshot.docs.map((doc) => ({
-            id: doc.id,
+            transactionId: doc.id,
             type: "Pay Bills",
             accountNumber: doc.data().accountNumber || "",
-            billAmount: parseFloat(doc.data().billAmount as string).toFixed(2),
+            amount: parseFloat(doc.data().amount as string).toFixed(2),
             convenienceFee: parseFloat(doc.data().convenienceFee as string).toFixed(2),
             totalAmount: parseFloat(doc.data().totalAmount as string).toFixed(2),
             date: doc.data().date || new Date().toISOString().split("T")[0],
@@ -128,7 +127,7 @@ const TransactionHistoryScreen = () => {
         </Text>
       </View>
       <View style={styles.transactionAmount}>
-        <Text style={styles.amount}>{item.amount}</Text>
+        <Text style={styles.amount}>{item.totalAmount}</Text>
         <Text style={styles.status}>{item.convenienceFee ? `Fee: ${item.convenienceFee}` : 'No Fee'}</Text>
         <Text style={styles.dateTime}>
           {item.date} {item.time}
