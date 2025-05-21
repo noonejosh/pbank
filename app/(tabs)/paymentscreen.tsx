@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/FirebaseConfig';
 
 interface UserData {
     uid?: string;
@@ -12,30 +14,66 @@ interface UserData {
     mobile?: string;
     dateOfBirth?: Date;
     createdAt?: Date;
+    loanID?: string;
+    totalpaid?: string;
+}
+
+interface LoanData {
+    loanID?: string;
+    totalpaid?: string;
+    balanceRemaining?: string;
 }
 
 const PaymentScreen = () => {
-    const { uid, loanId, paymentId, amountDue, dueDate, interestPay } = useLocalSearchParams();
+    const { uid, accountNumber, loanId, amountDue, dueDate, interestPay } = useLocalSearchParams();
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [userData, setUserData] = useState<UserData | null>({
-        deposit: '1000' // Mock deposit amount
-    });
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [loanData, setLoanData] = useState<LoanData | null>(null);
+    
 
     const paymentAmountDue = parseFloat(amountDue as string || '0');
     const paymentInterestPay = parseFloat(interestPay as string || '0');
-
+    
     useEffect(() => {
-        // Mock user data fetching
-        setLoading(true);
-        setTimeout(() => {
-            setUserData({ deposit: '5000' }); // Mock deposit
-            setLoading(false);
-        }, 1000);
-    }, []);
+        const fetchUserData = async () => {
+          if (typeof uid === "string" && typeof accountNumber === "string") {
+            // Fetch user data
+            const docRef = doc(db, "users", uid, "userInfo", accountNumber);
+            try {
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                setLoading(true);
+                setTimeout(() => {
+                    setUserData(docSnap.data() as UserData);
+                    setLoading(false);
+                }, 100);
+              } else {
+                console.log("No such document!");
+              }
+            } catch (error) {
+              console.error("Error fetching document: ", error);
+            }
+            // Fetch loan data
+            const loanDocRef = doc(db, "users", uid, "loanApplications", loanId as string);
+            try {
+              const loanDocSnap = await getDoc(loanDocRef);
+              if (loanDocSnap.exists()) {
+                setLoanData(loanDocSnap.data() as LoanData);
+              } else {
+                console.log("No such document!");
+              }
+            } catch (error) {
+              console.error("Error fetching document: ", error);
+            }
+            
+          }
+        };
+        fetchUserData();
+    }, [uid]);
 
     const formatCurrency = (amount: string | number | undefined) => {
         if (amount === undefined || amount === null) return "₱ 0.00";
@@ -49,13 +87,12 @@ const PaymentScreen = () => {
         }).format(numAmount);
     };
 
+
     const handleConfirmPayment = async () => {
-        // Mock payment confirmation
         setLoading(true);
         setError(null);
         setSuccessMessage(null);
-
-        setTimeout(() => {
+        setTimeout(async () => {
             const currentDeposit = parseFloat(userData?.deposit || '0');
             const amountToPay = paymentAmountDue;
 
@@ -64,7 +101,37 @@ const PaymentScreen = () => {
                 setLoading(false);
                 return;
             }
+            const newDeposit = currentDeposit - amountToPay;
+            const newTotalPaid = parseFloat(loanData?.totalpaid || '0') + amountToPay;
+            const newBalanceRemaining = parseFloat(loanData?.balanceRemaining || '0') - amountToPay;
 
+            // Update in Firestore
+            try {
+                const userDocRef = doc(db, "users", uid as string, "userInfo", accountNumber as string);
+                await updateDoc(userDocRef, {
+                    deposit: newDeposit.toString(),
+                });
+                const loanDocRef = doc(db, "users", uid as string, "loanApplications", loanId as string);
+                await updateDoc(loanDocRef, {
+                    totalpaid: newTotalPaid.toString(),
+                    balanceRemaining: newBalanceRemaining.toString(),
+                });
+            } catch (err) {
+                setError("Failed to update deposit in database.");
+                setLoading(false);
+                return;
+            }
+
+            // Update local state
+            setUserData((prevState) => ({
+                ...prevState,
+                deposit: newDeposit.toString(),
+            }));
+            setLoanData((prevState) => ({
+                ...prevState,
+                totalpaid: newTotalPaid.toString(),
+                balanceRemaining: newBalanceRemaining.toString(),
+            }));
             setSuccessMessage("Payment successful! Returning to loan details...");
             setLoading(false);
             setTimeout(() => {
