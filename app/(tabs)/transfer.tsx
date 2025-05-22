@@ -8,7 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 const TransferScreen = () => {
   const { destinationAccount, recipientName } = useLocalSearchParams();
@@ -26,11 +26,13 @@ const TransferScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
+          {/* Back Arrow */}
           <Ionicons name="arrow-back" size={24} color="#C6FF00" />
         </TouchableOpacity>
         <Text style={styles.title}>Transfer</Text>
-        <View style={{ width: 24 }} /> {/* Spacer to balance back arrow */}
+        {/* Spacer to balance back arrow */}
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Amount Placeholder */}
@@ -73,6 +75,7 @@ const TransferScreen = () => {
     </SafeAreaView>
   );
 };
+
 
 export default TransferScreen;
 

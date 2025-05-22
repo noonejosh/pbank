@@ -10,7 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 const TransferFundsScreen = () => {
   const { uid } = useLocalSearchParams();
@@ -63,24 +63,27 @@ const TransferFundsScreen = () => {
           <Ionicons name="qr-code-outline" size={32} color="#CDFF57" />
           <Text style={styles.actionText}>Scan QR</Text>
         </View>
-        <Link href="/(tabs)/savings" style={{ alignItems: 'center' }}>
-          <View style={{ alignItems: 'center' }}>
-            <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
-            <Text style={styles.actionText}>Invest</Text>
-          </View>
-        </Link>
-        <Link href="/(tabs)/paybills" style={{ alignItems: 'center' }}>
-          <View style={{ alignItems: 'center' }}>
-            <Ionicons name="receipt-outline" size={32} color="#CDFF57" />
-            <Text style={styles.actionText}>Pay Bills</Text>
-          </View>
-        </Link>
-        <Link href="/(tabs)/savings" style={{ alignItems: 'center' }}>
-          <View style={{ alignItems: 'center' }}>
-            <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
-            <Text style={styles.actionText}>Savings</Text>
-          </View>
-        </Link>
+        <TouchableOpacity
+          style={{ alignItems: 'center' }}
+          onPress={() => router.push({ pathname: "/(tabs)/savings", params: { uid } })}
+        >
+          <Ionicons name="trending-up-outline" size={32} color="#CDFF57" />
+          <Text style={styles.actionText}>Invest</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: 'center' }}
+          onPress={() => router.push({ pathname: "/(tabs)/paybills", params: { uid } })}
+        >
+          <Ionicons name="receipt-outline" size={32} color="#CDFF57" />
+          <Text style={styles.actionText}>Pay Bills</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ alignItems: 'center' }}
+          onPress={() => router.push({ pathname: "/(tabs)/loanscreen", params: { uid } })}
+        >
+          <Ionicons name="wallet-outline" size={32} color="#CDFF57" />
+          <Text style={styles.actionText}>Loan</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.recipientsContainer}>
@@ -129,7 +132,7 @@ const TransferFundsScreen = () => {
           <ScrollView
           style={styles.recipientsList}
           contentContainerStyle={{ paddingBottom: 120 }}
-        >
+          >
           {filteredRecipients.length === 0 ? (
             <Text style={styles.emptyListText}>No saved recipients.</Text>
           ) : (
