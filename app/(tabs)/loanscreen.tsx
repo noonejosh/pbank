@@ -52,7 +52,7 @@ const formatCurrency = (amount: number | string | undefined) => {
 };
 
 const LoanScreen = () => {
-  const { uid } = useLocalSearchParams();
+  const { uid, accountNumber } = useLocalSearchParams();
   const [activeOverdueLoans, setActiveOverdueLoans] = useState<LoanData[]>([]);
   const [pendingLoanApplications, setPendingLoanApplications] = useState<LoanData[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -99,9 +99,12 @@ const LoanScreen = () => {
       if (!querySnapshot.empty) {
         querySnapshot.docs.forEach((doc) => {
           const loan = { id: doc.id, ...doc.data() } as LoanData;
+          // Add balanceRemaining for every loan, regardless of status
+         const balance = Number(loan.balanceRemaining) || 0;
+          currentCombinedBalanceRemaining += balance;
+
           if (loan.status === 'active' || loan.status === 'overdue') {
             if (loan.loanAmount) currentCombinedLoanAmount += loan.loanAmount;
-            if (loan.balanceRemaining) currentCombinedBalanceRemaining += loan.balanceRemaining;
             if (loan.totalPaid) currentTotalPaidAcrossAllLoans += loan.totalPaid;
             if (loan.totalPayable) currentTotalPayableAcrossAllLoans += loan.totalPayable;
             tempActiveOverdueLoans.push(loan);
@@ -148,24 +151,6 @@ const LoanScreen = () => {
   const navigateToRequestLoan = useCallback(() => {
     router.push({ pathname: "/(tabs)/requestloan", params: { uid } });
   }, [uid]);
-
-  const handlePayNow = useCallback((loan: { id: string }, payment: { id: string; amountDue: number; dueDate: string; interestPay: string }) => {
-    if (!uid || !loan.id) {
-      Alert.alert("Error", "User ID or Loan ID is missing. Cannot proceed with payment.");
-      return;
-    }
-    router.push({
-      pathname: "/(tabs)/paymentscreen",
-      params: {
-        uid,
-        loanId: loan.id,
-        // We don't have a specific paymentId in this structure
-        amountDue: payment.amountDue.toString(),
-        dueDate: payment.dueDate,
-        interestPay: payment.interestPay,
-      }
-    });
-  }, [uid, router]);
 
   if (loading) {
     return (
@@ -282,11 +267,17 @@ const LoanScreen = () => {
                       <TouchableOpacity
                       style={styles.resolveButton}
                       onPress={() => {
-                        if (loan.nextDueDate) {
-                          handlePayNow({ id: loan.id }, { id: 'nextPayment', amountDue: loan.emiAmount || 0, dueDate: loan.nextDueDate, interestPay: loan.interestRate?.toString() || '0' });
-                        } else {
-                          Alert.alert("Error", "Due date is not available for this loan.");
-                        }
+                        router.push({
+                          pathname: "/(tabs)/paymentscreen",
+                          params: {
+                            uid: uid,
+                            accountNumber: accountNumber,
+                            loanId: loan.id, // <-- This is the correct Firestore doc ID for this loan
+                            amountDue: loan.emiAmount || 0,
+                            dueDate: loan.nextDueDate,
+                            interestPay: loan.interestRate?.toString() || '0',
+                          }
+                        });
                       }}
                     >
                       <Text style={styles.resolveButtonText}>Resolve Now</Text>

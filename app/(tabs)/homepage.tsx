@@ -183,7 +183,10 @@ const HomeScreen = () => {
           onPress={() =>
             router.push({
               pathname: "/(tabs)/loanscreen",
-              params: { uid: uid },
+              params: { 
+                uid: uid,
+                accountNumber: userData?.id,
+              },
             })
           }
         >
