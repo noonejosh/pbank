@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,31 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 
 const TransferScreen = () => {
+  const { destinationAccount, recipientName } = useLocalSearchParams();
   const [fromAccount, setFromAccount] = useState('');
   const [toAccount, setToAccount] = useState('');
+
+  // Prefill the "To" field if destinationAccount is present
+  useEffect(() => {
+    if (destinationAccount) {
+      setToAccount(destinationAccount as string);
+    }
+  }, [destinationAccount]);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}>
+          {/* Back Arrow */}
           <Ionicons name="arrow-back" size={24} color="#C6FF00" />
         </TouchableOpacity>
         <Text style={styles.title}>Transfer</Text>
-        <View style={{ width: 24 }} /> {/* Spacer to balance back arrow */}
+        {/* Spacer to balance back arrow */}
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Amount Placeholder */}
@@ -43,6 +54,11 @@ const TransferScreen = () => {
         />
 
         <Text style={styles.inputLabel}>To</Text>
+        {recipientName ? (
+          <Text style={{ color: '#C6FF00', marginBottom: 4, marginLeft: 2 }}>
+            {recipientName}
+          </Text>
+        ) : null}
         <TextInput
           style={styles.input}
           placeholder="Enter destination account"
@@ -60,7 +76,10 @@ const TransferScreen = () => {
   );
 };
 
+
 export default TransferScreen;
+
+// ...styles remain unchanged...
 
 const styles = StyleSheet.create({
   container: {

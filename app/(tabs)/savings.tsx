@@ -18,9 +18,6 @@ const SavingsScreen = () => {
           <Ionicons name="arrow-back" size={24} color="#C6FF00" />
         </TouchableOpacity>
         <Text style={styles.title}>Savings</Text>
-        <TouchableOpacity style={styles.withdrawButton}>
-          <Text style={styles.withdrawText}>Withdraw</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Total Savings Card */}
@@ -32,9 +29,6 @@ const SavingsScreen = () => {
         </View>
 
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionText}>Deposit</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionText}>Transfer</Text>
           </TouchableOpacity>
@@ -73,6 +67,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: 'bold',
+    position: 'absolute',
+    left: '37%',
   },
   withdrawButton: {
     backgroundColor: '#C6FF00',
@@ -112,9 +108,11 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: '#000000',
-    paddingHorizontal: 24,
+    paddingHorizontal: 80,
     paddingVertical: 10,
     borderRadius: 25,
+    position: 'relative',
+    left: '13%',
   },
   actionText: {
     color: '#C6FF00',

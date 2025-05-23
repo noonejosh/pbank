@@ -38,7 +38,7 @@ export default function Login() {
         params: { uid: user.uid }, // Pass the user ID
       });
 
-      // Fetch the first document under the userInfo subcollection
+      /*// Fetch the first document under the userInfo subcollection
       const userInfoCollectionRef = collection(db, "users", user.uid, "userInfo");
       const querySnapshot = await getDocs(userInfoCollectionRef);
 
@@ -54,17 +54,17 @@ export default function Login() {
           const userData = userDocSnap.data();
           const mobile = userData.mobile; // Get the mobile number from the document
 
-          // // Navigate to the OTP screen with the mobile number
-          // router.push({
-          //   pathname: "./otp",
-          //   params: { mobile },
-          // });
+          // Navigate to the OTP screen with the mobile number
+          router.push({
+            pathname: "./homepage",
+            params: { mobile },
+          });
         } else {
           Alert.alert("Error", "User data not found in the database.");
         }
       } else {
         Alert.alert("Error", "No documents found in the userInfo subcollection.");
-      }
+      }*/
     } catch (error) {
       Alert.alert("Login Failed", error instanceof Error ? error.message : "An unknown error occurred.");
     }

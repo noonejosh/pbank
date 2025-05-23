@@ -12,6 +12,11 @@ const TvCableBillsScreen = () => {
   const router = useRouter();
   const { uid, accountNumber } = useLocalSearchParams();
 
+  // Go back function
+  const handleGoBack = () => {
+    router.back();
+  };
+
   const providers: Provider[] = [
     { name: 'Cignal TV', logo: require('../../assets/images/cignaltv.png') },
     { name: 'SkyCable', logo: require('../../assets/images/skycable.jpg') },
@@ -31,7 +36,7 @@ const TvCableBillsScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>TV & Cable Bills</Text>
