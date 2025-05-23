@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router, useLocalSearchParams } from "expo-router"; // Make sure 'router' is imported
+import { router, useLocalSearchParams } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
-// Define the UserData interface (reused from HomeScreen)
 interface UserData {
-  id?: string; // Document ID
+  id?: string;
   name?: string;
   deposit?: string;
   email?: string;
@@ -16,37 +15,72 @@ interface UserData {
   createdAt?: Date;
 }
 
+interface FixedDeposit {
+  id: string;
+  amount: number;
+  tenureMonths: number;
+  interestRate: number;
+  maturityDate: string;
+  startDate: string;
+  maturityAmount: number;
+  status: 'active' | 'matured' | 'early_withdrawn';
+}
+
 const InvestScreen = () => {
-  const { uid } = useLocalSearchParams(); // Get UID from navigation params
+  const { uid } = useLocalSearchParams();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [totalFixedDepositAmount, setTotalFixedDepositAmount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const formatCurrency = (amount: number | string | undefined) => {
+    if (amount === undefined || amount === null) return "₱ 0.00";
+    const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
+    if (isNaN(numAmount)) return "₱ 0.00";
+    return `₱ ${new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numAmount)}`;
+  };
 
   useEffect(() => {
-    const fetchUserInfoDocuments = async () => {
-      if (typeof uid === "string") {
+    const fetchData = async () => {
+      if (typeof uid !== "string") {
+        setError("Invalid user ID.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        // Fetch user info
         const userInfoCollectionRef = collection(db, "users", uid, "userInfo");
-
-        try {
-          const querySnapshot = await getDocs(userInfoCollectionRef);
-          const documents = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          if (documents.length > 0) {
-            setUserData(documents[0] as UserData);
-          } else {
-            console.log("No user info documents found.");
-          }
-        } catch (error) {
-          console.error("Error fetching user info documents: ", error);
+        const userInfoQuerySnapshot = await getDocs(userInfoCollectionRef);
+        if (!userInfoQuerySnapshot.empty) {
+          setUserData({ id: userInfoQuerySnapshot.docs[0].id, ...userInfoQuerySnapshot.docs[0].data() as UserData });
+        } else {
+          setUserData({ name: 'User', deposit: '0', id: 'default' });
         }
-      } else {
-        // This log should ideally not fire if uid is passed from HomeScreen
-        console.error("Invalid uid: undefined (InvestScreen received no UID)");
+
+        // Fetch fixed deposits and calculate total active amount
+        const fdCollectionRef = collection(db, "users", uid, "fixedDeposits");
+        const fdQuerySnapshot = await getDocs(fdCollectionRef);
+        let activeFdsTotal = 0;
+        fdQuerySnapshot.docs.forEach(doc => {
+          const fd = doc.data() as FixedDeposit;
+          // Only sum 'active' fixed deposits
+          if (fd.status === 'active') {
+            activeFdsTotal += fd.amount;
+          }
+        });
+        setTotalFixedDepositAmount(activeFdsTotal);
+
+      } catch (err) {
+        console.error("Error fetching data: ", err);
+        setError("Failed to load data. Please try again.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserInfoDocuments();
+    fetchData();
   }, [uid]);
 
   return (
@@ -56,7 +90,7 @@ const InvestScreen = () => {
         <View style={styles.headerContentRow}>
           {/* Back Button */}
           <TouchableOpacity
-            onPress={() => router.back()} // Uses expo-router's back functionality
+            onPress={() => router.back()}
             style={styles.headerBackBtn}
           >
             <Ionicons name="arrow-back-outline" size={24} color="#CDFF57" />
@@ -98,64 +132,78 @@ const InvestScreen = () => {
           padding: 15,
         }}
       >
-        <Text style={styles.sectionTitle}>Your Investment Portfolio</Text>
-        <View style={styles.investmentCard}>
-          <Ionicons name="pie-chart-outline" size={30} color="#000" />
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.cardTitle}>Total Portfolio Value</Text>
-            <Text style={styles.cardValue}>PHP 0.00</Text>
-          </View>
-        </View>
+        {loading ? (
+          <ActivityIndicator size="large" color="#CDFF57" style={{ marginTop: 50 }} />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>Your Investment Portfolio</Text>
+            <View style={styles.investmentCard}>
+              <Ionicons name="pie-chart-outline" size={30} color="#000" />
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.cardTitle}>Total Active Fixed Deposits</Text>
+                <Text style={styles.cardValue}>{formatCurrency(totalFixedDepositAmount)}</Text>
+              </View>
+            </View>
 
-        <TouchableOpacity style={styles.actionButtonPrimary}>
-          <Text style={styles.actionButtonTextPrimary}>View Your Investments</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButtonPrimary}
+              onPress={() => router.push({ pathname: "/(tabs)/fixeddepositscreen", params: { uid } })}
+            >
+              <Text style={styles.actionButtonTextPrimary}>View Your Investment</Text>
+            </TouchableOpacity>
 
-        <Text style={[styles.sectionTitle, { marginTop: 30 }]}>Explore Investment Options</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 30 }]}>Explore Investment Options</Text>
 
-        {/* Investment Option 1: Fixed Deposits */}
-        <TouchableOpacity style={styles.investmentOptionCard}>
-          <Ionicons name="cash-outline" size={24} color="#333" />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.optionTitle}>Fixed Deposits</Text>
-            <Text style={styles.optionDescription}>Earn guaranteed returns with low risk.</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={20} color="#999" />
-        </TouchableOpacity>
+            {/* Investment Option 1: Fixed Deposits */}
+            <TouchableOpacity
+              style={styles.investmentOptionCard}
+              onPress={() => router.push({ pathname: "/(tabs)/fixeddepositscreen", params: { uid } })}
+            >
+              <Ionicons name="cash-outline" size={24} color="#333" />
+              <View style={{ marginLeft: 10, flex: 1 }}>
+                <Text style={styles.optionTitle}>Fixed Deposits</Text>
+                <Text style={styles.optionDescription}>Earn guaranteed returns with low risk.</Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={20} color="#999" />
+            </TouchableOpacity>
 
-        {/* Investment Option 2: Mutual Funds */}
-        <TouchableOpacity style={styles.investmentOptionCard}>
-          <Ionicons name="trending-up-outline" size={24} color="#333" />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.optionTitle}>Mutual Funds</Text>
-            <Text style={styles.optionDescription}>Diversified investments managed by experts.</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={20} color="#999" />
-        </TouchableOpacity>
+            {/* Investment Option 2: Mutual Funds */}
+            <TouchableOpacity style={styles.investmentOptionCard}>
+              <Ionicons name="trending-up-outline" size={24} color="#333" />
+              <View style={{ marginLeft: 10, flex: 1 }}>
+                <Text style={styles.optionTitle}>Mutual Funds</Text>
+                <Text style={styles.optionDescription}>Diversified investments managed by experts.</Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={20} color="#999" />
+            </TouchableOpacity>
 
-        {/* Investment Option 3: Stocks */}
-        <TouchableOpacity style={styles.investmentOptionCard}>
-          <Ionicons name="analytics-outline" size={24} color="#333" />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.optionTitle}>Stocks</Text>
-            <Text style={styles.optionDescription}>Invest in leading companies and grow with them.</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={20} color="#999" />
-        </TouchableOpacity>
+            {/* Investment Option 3: Stocks */}
+            <TouchableOpacity style={styles.investmentOptionCard}>
+              <Ionicons name="analytics-outline" size={24} color="#333" />
+              <View style={{ marginLeft: 10, flex: 1 }}>
+                <Text style={styles.optionTitle}>Stocks</Text>
+                <Text style={styles.optionDescription}>Invest in leading companies and grow with them.</Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={20} color="#999" />
+            </TouchableOpacity>
 
-        {/* Investment Option 4: Savings Accounts with Higher Interest */}
-        <TouchableOpacity style={styles.investmentOptionCard}>
-          <Ionicons name="wallet-outline" size={24} color="#333" />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.optionTitle}>High-Yield Savings</Text>
-            <Text style={styles.optionDescription}>Boost your savings with competitive interest rates.</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={20} color="#999" />
-        </TouchableOpacity>
+            {/* Investment Option 4: Savings Accounts with Higher Interest */}
+            <TouchableOpacity style={styles.investmentOptionCard}>
+              <Ionicons name="wallet-outline" size={24} color="#333" />
+              <View style={{ marginLeft: 10, flex: 1 }}>
+                <Text style={styles.optionTitle}>High-Yield Savings</Text>
+                <Text style={styles.optionDescription}>Boost your savings with competitive interest rates.</Text>
+              </View>
+              <Ionicons name="chevron-forward-outline" size={20} color="#999" />
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButtonSecondary}>
-          <Text style={styles.actionButtonTextSecondary}>Learn More About Investing</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButtonSecondary}>
+              <Text style={styles.actionButtonTextSecondary}>Learn More About Investing</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -166,46 +214,42 @@ const styles = StyleSheet.create({
   headerMainContainer: {
     backgroundColor: "#111",
     paddingHorizontal: 20,
-    paddingTop: 50, // Top padding for status bar clearance
-    paddingBottom: 10, // Padding at the bottom of the header section
+    paddingTop: 50,
+    paddingBottom: 10,
   },
   headerContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Distributes items with space between them
-    marginBottom: 10, // Space between this row and "GROW YOUR WEALTH" text
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   headerBackBtn: {
-    // No specific styling needed here unless it requires extra hit area or padding
-    marginRight: 10, // Space between back button and the next element
+    marginRight: 10,
   },
   headerLogo: {
     width: 40,
     height: 40,
     resizeMode: "contain",
-    // No need for absolute positioning anymore
   },
   headerWelcomeText: {
-    flex: 1, // Allows the text to take up available space, pushing other items
+    flex: 1,
     color: "#CDFF57",
     fontSize: 13,
     fontWeight: "bold",
-    textAlign: 'left', // Align text within its flex container
-    marginLeft: 10, // Space between logo and welcome text
+    textAlign: 'left',
+    marginLeft: 10,
   },
   headerNotificationIcon: {
-    marginLeft: 10, // Space between welcome text and notification icon
+    marginLeft: 10,
   },
   growWealthText: {
     fontSize: 10,
     fontWeight: "bold",
     color: "white",
     textAlign: "left",
-    // No need for absolute positioning, left, top, marginTop properties here anymore
   },
 
   // --- Existing Styles (remain the same) ---
-  // You can remove the 'footer' related styles if your footer is in a shared layout file
   footer: {
     position: "absolute",
     bottom: 0,
@@ -326,6 +370,12 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  errorText: {
+    color: '#FF6347',
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 20,
   },
 });
 
