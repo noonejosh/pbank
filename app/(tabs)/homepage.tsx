@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from "rea
 import { Ionicons } from "@expo/vector-icons";
 // Removed 'Link' from import
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 
 const HomeScreen = () => {
@@ -50,6 +50,7 @@ const HomeScreen = () => {
 
     fetchUserInfoDocuments();
   }, [uid]);
+  
 
   const formatDeposit = (deposit: string) => {
     const number = parseFloat(deposit);
@@ -234,8 +235,8 @@ const HomeScreen = () => {
           onPress={() => {
             setActiveTab("transfer");
             router.push({
-              pathname: "/(tabs)/transferfund",
-              params: { uid: uid },
+              pathname: "/(tabs)/transfer",
+              params: { uid: uid, accountNumber: userData?.id },
             });
           }}
         >

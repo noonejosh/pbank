@@ -20,6 +20,7 @@ const PaymentConfirm = () => {
   const handlePay = async () => {
     if (typeof uid === "string" && typeof accountNumber === "string") {
       const docRef = doc(db, "users", uid, "userInfo", accountNumber);
+      const accountRef = doc(db, "userBankInfo", accountNumber);
       
       const historyCollectionRef = collection(db, "users", uid, "userInfo", "history", "paybills"); 
       const randomRef = `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
@@ -41,6 +42,8 @@ const PaymentConfirm = () => {
           // Update the deposit in Firestore
           await updateDoc(docRef, { deposit: newDeposit.toFixed(2) });
           console.log("Deposit updated successfully.");
+ 
+          await updateDoc(accountRef, { deposit: newDeposit.toFixed(2) });
 
           // Add the transaction to the history collection with the generated transaction ID
           await addDoc(historyCollectionRef, {

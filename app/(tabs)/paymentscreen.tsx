@@ -116,6 +116,10 @@ const PaymentScreen = () => {
                     totalpaid: newTotalPaid.toString(),
                     balanceRemaining: newBalanceRemaining.toString(),
                 });
+                const userBankInfoDocRef = doc(db, "userBankInfo", accountNumber as string);
+                await updateDoc(userBankInfoDocRef, {
+                    deposit: newDeposit.toString(),
+                });
             } catch (err) {
                 setError("Failed to update deposit in database.");
                 setLoading(false);

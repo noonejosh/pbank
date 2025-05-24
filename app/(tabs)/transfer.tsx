@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,105 @@ import {
   TextInput,
   StyleSheet,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { db } from '@/FirebaseConfig';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 
+interface UserData {
+    id?: string;
+    name?: string;
+    deposit?: string;
+    email?: string;
+    mobile?: string;
+    dateOfBirth?: Date;
+    createdAt?: Date;
+  }
+  
 const TransferScreen = () => {
-  const { destinationAccount, recipientName } = useLocalSearchParams();
-  const [fromAccount, setFromAccount] = useState('');
+  const { uid, accountNumber } = useLocalSearchParams();
+  const [fromAccount] = useState(accountNumber || '');
   const [toAccount, setToAccount] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [userData, setUserData] = useState<UserData>({});
 
-  // Prefill the "To" field if destinationAccount is present
   useEffect(() => {
-    if (destinationAccount) {
-      setToAccount(destinationAccount as string);
+      const fetchUserInfoDocuments = async () => {
+        if (typeof uid === "string" && typeof accountNumber === "string") {
+          const userInfoDocRef = doc(db, "users", uid, "userInfo", accountNumber);
+  
+          try {
+            const docSnap = await getDoc(userInfoDocRef);
+            if (docSnap.exists()) {
+              console.log("Fetched document data:", docSnap.data());
+              setUserData(docSnap.data() as UserData);
+            } else {
+              console.log("No document found in userInfo.");
+            }
+          } catch (error) {
+            console.error("Error fetching document: ", error);
+          }
+        } else {
+          console.error("Invalid uid or accountNumber:", uid, accountNumber);
+        }
+      };
+  
+      fetchUserInfoDocuments();
+    }, [uid, accountNumber]);
+
+  // Check if "To" account exists in DB
+  const checkToAccount = async () => {
+    const userInfoRef = doc(db, 'userBankInfo', toAccount); // <-- use your actual subcollection name
+    const docSnap = await getDoc(userInfoRef);
+    if (docSnap.exists()) {
+      const currentDeposit = parseFloat(docSnap.data().deposit || '0');
+      const transferAmount = parseFloat(amount || '0');
+
+      // Update Firestore
+      const newDeposit = (currentDeposit + transferAmount).toString();
+      await updateDoc(userInfoRef, { deposit: newDeposit });
+
+      // Update local state
+      setUserData((prev) => ({
+        ...prev,
+        deposit: newDeposit,
+      }));
+
+      Alert.alert('Success', 'Transfer can proceed!');
+      return true;
     }
-  }, [destinationAccount]);
+    return false;
+  };
+
+  const handleTransfer = async () => {
+    const exists = await checkToAccount();
+    if (!exists) {
+      Alert.alert('Error', 'Destination account does not exist.');
+      return;
+    }
+    const docRef = doc(db, 'users', uid as string, 'userInfo', accountNumber as string);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const currentDeposit = parseFloat(docSnap.data().deposit || '0');
+      const transferAmount = parseFloat(amount || '0');
+
+      // Update Firestore
+      const newDeposit = (currentDeposit - transferAmount).toString();
+      await updateDoc(docRef, { deposit: newDeposit });
+
+      await updateDoc(doc(db, 'userBankInfo', accountNumber as string), { deposit: newDeposit });
+
+      // Update local state
+      setUserData((prev) => ({
+        ...prev,
+        deposit: newDeposit,
+      }));
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,11 +119,29 @@ const TransferScreen = () => {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Amount Placeholder */}
-      <Text style={styles.amountText}>PHP 0.00</Text>
+      {/* Amount Input */}
+      <TouchableOpacity onPress={() => setEditingAmount(true)} activeOpacity={1}>
+        {editingAmount ? (
+          <TextInput
+            style={[styles.amountText, { backgroundColor: '#222', borderRadius: 8 }]}
+            value={amount}
+            onChangeText={setAmount}
+            onBlur={() => setEditingAmount(false)}
+            keyboardType="numeric"
+            autoFocus
+            placeholder="0.00"
+            placeholderTextColor="#888"
+            textAlign="center"
+          />
+        ) : (
+          <Text style={styles.amountText}>
+            PHP {amount ? Number(amount).toLocaleString() : '0.00'}
+          </Text>
+        )}
+      </TouchableOpacity>
 
       {/* Available Balance */}
-      <Text style={styles.availableBalanceLabel}>PHP 100,000,000</Text>
+      <Text style={styles.availableBalanceLabel}>{userData.deposit ? Number(userData.deposit).toLocaleString() : '0.00'}</Text>
       <Text style={styles.availableBalanceText}>Available balance</Text>
 
       {/* Input Fields */}
@@ -47,10 +149,10 @@ const TransferScreen = () => {
         <Text style={styles.inputLabel}>From</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter source account"
+          placeholder={fromAccount || 'Loading...'}
           placeholderTextColor="#444"
           value={fromAccount}
-          onChangeText={setFromAccount}
+          editable={false}
         />
 
         <Text style={styles.inputLabel}>To</Text>
@@ -65,11 +167,12 @@ const TransferScreen = () => {
           placeholderTextColor="#444"
           value={toAccount}
           onChangeText={setToAccount}
+          onBlur={checkToAccount}
         />
       </View>
 
       {/* Transfer Button */}
-      <TouchableOpacity style={styles.transferButton}>
+      <TouchableOpacity style={styles.transferButton} onPress={handleTransfer}>
         <Text style={styles.transferButtonText}>Transfer</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -78,8 +181,6 @@ const TransferScreen = () => {
 
 
 export default TransferScreen;
-
-// ...styles remain unchanged...
 
 const styles = StyleSheet.create({
   container: {

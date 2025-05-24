@@ -7,6 +7,7 @@ const PayBillsScreen = () => {
   const router = useRouter();
   const { uid, accountNumber } = useLocalSearchParams(); 
   console.log("UID:", uid);
+  console.log("Account Number:", accountNumber);
 
   const handleInternetPress = () => {
     router.push({pathname: '/internet', params: { uid:uid, accountNumber: accountNumber }});
