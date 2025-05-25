@@ -29,6 +29,8 @@ const TransactionHistoryScreen = () => {
     transactionId: string;
     date: string;
     time: string;
+    interestPay?: string;
+    loanAmount?: string;
   }
   
   console.log("TransactionHistoryScreen uid:", uid); // Log the uid for debugging
@@ -41,13 +43,17 @@ const TransactionHistoryScreen = () => {
           const withdrawRef = collection(db, "users", uid, "userInfo", "history", "withdraw");
           const transferRef = collection(db, "users", uid, "userInfo", "history", "transfer");
           const paybillsRef = collection(db, "users", uid, "userInfo", "history", "paybills");
+          const loanRef = collection(db, "users", uid, "userInfo", "history", "loanPayment");
+          const investmentRef = collection(db, "users", uid, "userInfo", "history", "investments");
 
           // Fetch documents from each subcollection
-          const [depositSnapshot, withdrawSnapshot, transferSnapshot, paybillsSnapshot] = await Promise.all([
+          const [depositSnapshot, withdrawSnapshot, transferSnapshot, paybillsSnapshot, loanSnapshot, investmentSnapshot] = await Promise.all([
             getDocs(depositRef),
             getDocs(withdrawRef),
             getDocs(transferRef),
             getDocs(paybillsRef),
+            getDocs(loanRef),
+            getDocs(investmentRef),
           ]);
 
           // Map documents from each subcollection
@@ -72,10 +78,10 @@ const TransactionHistoryScreen = () => {
 
           const transferDocs = transferSnapshot.docs.map((doc) => ({
             transactionsId: doc.id,
-            type: "Transfer",
+            type: doc.data().type,
             accountNumber: doc.data().accountNumber || "",
             details: doc.data().details || "",
-            amount: doc.data().totalAmount,
+            amount: doc.data().amount,
             transactionId: doc.id,
             date: doc.data().date || new Date().toISOString().split("T")[0],
             time: doc.data().time || new Date().toISOString().split("T")[1],
@@ -92,8 +98,28 @@ const TransactionHistoryScreen = () => {
             time: doc.data().time || new Date().toISOString().split("T")[1],
           }));
 
+          const loanDocs = loanSnapshot.docs.map((doc) => ({
+            transactionId: doc.id,
+            type: "Loan Payment",
+            details: doc.data().details || "",
+            amount: parseFloat(doc.data().amount as string).toFixed(2),
+            interestPay: parseFloat(doc.data().interestPay as string).toFixed(2),
+            totalAmount: parseFloat(doc.data().totalAmount as string).toFixed(2),
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+          const investmentDocs = investmentSnapshot.docs.map((doc) => ({
+            transactionId: doc.id,
+            type: doc.data().type || "Investment",
+            details: doc.data().details || "",
+            amount: parseFloat(doc.data().amount as string).toFixed(2),
+            interestPay: parseFloat(doc.data().interestPay as string).toFixed(2),
+            date: doc.data().date || new Date().toISOString().split("T")[0],
+            time: doc.data().time || new Date().toISOString().split("T")[1],
+          }));
+
           // Combine all transactions
-          const allTransactions = [...depositDocs, ...withdrawDocs, ...transferDocs, ...paybillsDocs];
+          const allTransactions = [...depositDocs, ...withdrawDocs, ...transferDocs, ...paybillsDocs, ...loanDocs, ...investmentDocs];
           console.log("All Transactions:", allTransactions);
 
           // Optionally sort transactions by date or time
@@ -127,8 +153,20 @@ const TransactionHistoryScreen = () => {
         </Text>
       </View>
       <View style={styles.transactionAmount}>
-        <Text style={styles.amount}>{item.totalAmount}</Text>
-        <Text style={styles.status}>{item.convenienceFee ? `Fee: ${item.convenienceFee}` : 'No Fee'}</Text>
+        <Text style={styles.amount}>
+          {item.totalAmount && item.totalAmount !== "NaN"
+            ? `${item.totalAmount}`
+            : item.amount && item.amount !== "NaN"
+              ? `${item.amount}`
+              : 'N/A'}
+        </Text>
+        <Text style={styles.status}>
+          {item.convenienceFee
+            ? `Fee: ${item.convenienceFee}`
+            : item.interestPay
+              ? `Fee: ${item.interestPay}`
+              : 'No Fee'}
+        </Text>
         <Text style={styles.dateTime}>
           {item.date} {item.time}
         </Text>

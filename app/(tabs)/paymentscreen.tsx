@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/FirebaseConfig';
 
 interface UserData {
@@ -25,7 +25,7 @@ interface LoanData {
 }
 
 const PaymentScreen = () => {
-    const { uid, accountNumber, loanId, amountDue, dueDate, interestPay } = useLocalSearchParams();
+    const { uid, accountNumber, loanId, amountDue, dueDate, interestPay, loanAmount } = useLocalSearchParams();
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
@@ -111,15 +111,33 @@ const PaymentScreen = () => {
                 await updateDoc(userDocRef, {
                     deposit: newDeposit.toString(),
                 });
+                console.log("User deposit updated successfully.");
                 const loanDocRef = doc(db, "users", uid as string, "loanApplications", loanId as string);
                 await updateDoc(loanDocRef, {
                     totalpaid: newTotalPaid.toString(),
                     balanceRemaining: newBalanceRemaining.toString(),
                 });
+                console.log("User and loan data updated successfully.");
                 const userBankInfoDocRef = doc(db, "userBankInfo", accountNumber as string);
                 await updateDoc(userBankInfoDocRef, {
                     deposit: newDeposit.toString(),
                 });
+                console.log("Deposit and loan data updated successfully.");
+                const loanPaymentDocRef = collection(db, "users", uid as string, "userInfo", "history", "loanPayment");
+                const randomRef = `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+                await addDoc(loanPaymentDocRef, {
+                    randomRef: randomRef,
+                    detail: "Loan Payment",
+                    accountNumber: accountNumber,
+                    balanceRemaining: newBalanceRemaining.toString(),
+                    interestPay: paymentInterestPay.toString(),
+                    type: "Loan",
+                    loanAmount: loanAmount.toString(),
+                    amount: amountToPay.toString(),
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toISOString().split('T')[1],
+                });
+                console.log("Payment recorded successfully.");
             } catch (err) {
                 setError("Failed to update deposit in database.");
                 setLoading(false);

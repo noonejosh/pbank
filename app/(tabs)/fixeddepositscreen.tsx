@@ -147,6 +147,16 @@ const FixedDepositScreen = () => {
         status: 'active',
       });
 
+      const investmentsDocRef = collection(db, "users", uid as string, "userInfo", "history", "investments");
+      await addDoc(investmentsDocRef, {
+        type: "Investment Overview",
+        detail: "Total active fixed deposits amount",
+        amount: amount,
+        interestPay: parseFloat((amount * fdInterestRate * tenure / 12).toFixed(2)),
+        totalFixedDepositAmount: amount + parseFloat((amount * fdInterestRate * tenure / 12).toFixed(2)),
+        date: new Date().toISOString().split("T")[0],
+        time: new Date().toISOString().split("T")[1],
+      });
       Alert.alert("Success", "Fixed deposit opened successfully!");
       setIsModalVisible(false);
       setFdAmount('');

@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { db } from '@/FirebaseConfig';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
 
 interface UserData {
     id?: string;
@@ -33,77 +33,114 @@ const TransferScreen = () => {
   const [userData, setUserData] = useState<UserData>({});
 
   useEffect(() => {
-      const fetchUserInfoDocuments = async () => {
-        if (typeof uid === "string" && typeof accountNumber === "string") {
-          const userInfoDocRef = doc(db, "users", uid, "userInfo", accountNumber);
-  
-          try {
-            const docSnap = await getDoc(userInfoDocRef);
-            if (docSnap.exists()) {
-              console.log("Fetched document data:", docSnap.data());
-              setUserData(docSnap.data() as UserData);
-            } else {
-              console.log("No document found in userInfo.");
-            }
-          } catch (error) {
-            console.error("Error fetching document: ", error);
-          }
-        } else {
-          console.error("Invalid uid or accountNumber:", uid, accountNumber);
-        }
-      };
-  
-      fetchUserInfoDocuments();
-    }, [uid, accountNumber]);
+    const fetchUserInfoDocuments = async () => {
+      if (typeof uid === "string" && typeof accountNumber === "string") {
+        const userInfoDocRef = doc(db, "users", uid, "userInfo", accountNumber);
 
-  // Check if "To" account exists in DB
+        try {
+          const docSnap = await getDoc(userInfoDocRef);
+          if (docSnap.exists()) {
+            setUserData(docSnap.data() as UserData);
+          }
+        } catch (error) {
+          console.error("Error fetching document: ", error);
+        }
+      }
+    };
+
+    fetchUserInfoDocuments();
+  }, [uid, accountNumber]);
+
+  // Only check if recipient exists and set name
   const checkToAccount = async () => {
-    const userInfoRef = doc(db, 'userBankInfo', toAccount); // <-- use your actual subcollection name
+    if (!toAccount) return false;
+    const userInfoRef = doc(db, 'userBankInfo', toAccount);
     const docSnap = await getDoc(userInfoRef);
     if (docSnap.exists()) {
-      const currentDeposit = parseFloat(docSnap.data().deposit || '0');
-      const transferAmount = parseFloat(amount || '0');
-
-      // Update Firestore
-      const newDeposit = (currentDeposit + transferAmount).toString();
-      await updateDoc(userInfoRef, { deposit: newDeposit });
-
-      // Update local state
-      setUserData((prev) => ({
-        ...prev,
-        deposit: newDeposit,
-      }));
-
-      Alert.alert('Success', 'Transfer can proceed!');
+      const recipientData = docSnap.data() as UserData;
+      setRecipientName(recipientData.name || 'Unknown Recipient');
       return true;
     }
+    setRecipientName('');
     return false;
   };
 
   const handleTransfer = async () => {
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      Alert.alert('Error', 'Please enter a valid amount.');
+      return;
+    }
+    if (!toAccount) {
+      Alert.alert('Error', 'Please enter a destination account.');
+      return;
+    }
+    if (toAccount === fromAccount) {
+      Alert.alert('Error', 'Cannot transfer to the same account.');
+      return;
+    }
+
     const exists = await checkToAccount();
     if (!exists) {
       Alert.alert('Error', 'Destination account does not exist.');
       return;
     }
-    const docRef = doc(db, 'users', uid as string, 'userInfo', accountNumber as string);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const currentDeposit = parseFloat(docSnap.data().deposit || '0');
-      const transferAmount = parseFloat(amount || '0');
 
-      // Update Firestore
-      const newDeposit = (currentDeposit - transferAmount).toString();
-      await updateDoc(docRef, { deposit: newDeposit });
-
-      await updateDoc(doc(db, 'userBankInfo', accountNumber as string), { deposit: newDeposit });
-
-      // Update local state
-      setUserData((prev) => ({
-        ...prev,
-        deposit: newDeposit,
-      }));
+    // Get sender info
+    const senderRef = doc(db, 'users', uid as string, 'userInfo', accountNumber as string);
+    const senderSnap = await getDoc(senderRef);
+    if (!senderSnap.exists()) {
+      Alert.alert('Error', 'Sender account does not exist.');
+      return;
     }
+    const senderDeposit = parseFloat(senderSnap.data().deposit || '0');
+    const transferAmount = parseFloat(amount || '0');
+    if (senderDeposit < transferAmount) {
+      Alert.alert('Error', 'Insufficient balance.');
+      return;
+    }
+
+    // Get recipient info
+    const recipientRef = doc(db, 'userBankInfo', toAccount);
+    const recipientSnap = await getDoc(recipientRef);
+    if (!recipientSnap.exists()) {
+      Alert.alert('Error', 'Recipient account does not exist.');
+      return;
+    }
+    const recipientDeposit = parseFloat(recipientSnap.data().deposit || '0');
+
+    // Update balances
+    const newSenderDeposit = (senderDeposit - transferAmount).toString();
+    const newRecipientDeposit = (recipientDeposit + transferAmount).toString();
+
+    await updateDoc(senderRef, { deposit: newSenderDeposit });
+    await updateDoc(doc(db, 'userBankInfo', accountNumber as string), { deposit: newSenderDeposit });
+    await updateDoc(recipientRef, { deposit: newRecipientDeposit });
+
+    // Add to history
+    const historyCollectionRef = collection(db, 'users', uid as string, 'userInfo', 'history', 'transfer');
+    const randomRef = `REF-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    await addDoc(historyCollectionRef, {
+      randomRef: randomRef,
+      type: 'Transfer',
+      details: 'Transfer to ' + toAccount,
+      recipientName: recipientName || 'Unknown',
+      fromAccount: fromAccount,
+      toAccount: toAccount,
+      amount: transferAmount.toFixed(2),
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toISOString().split('T')[1],
+    });
+
+    // Update local state
+    setUserData((prev) => ({
+      ...prev,
+      deposit: newSenderDeposit,
+    }));
+
+    setAmount('');
+    setToAccount('');
+    setRecipientName('');
+    Alert.alert('Success', 'Transfer completed!');
   };
 
   return (

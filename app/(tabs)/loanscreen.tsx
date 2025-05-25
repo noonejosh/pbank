@@ -276,6 +276,7 @@ const LoanScreen = () => {
                             amountDue: loan.emiAmount || 0,
                             dueDate: loan.nextDueDate,
                             interestPay: loan.interestRate?.toString() || '0',
+                            loanAmount: loan.loanAmount || 0,
                           }
                         });
                       }}
