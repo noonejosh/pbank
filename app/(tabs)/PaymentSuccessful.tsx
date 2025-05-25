@@ -6,7 +6,7 @@ import { AntDesign } from "@expo/vector-icons";
 const PaymentSuccessful = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { totalAmount, randomRef, accountNumber } = params;
+  const { totalAmount, randomRef, accountNumber, uid } = params;
 
 
   // State for Date & Time
@@ -30,28 +30,28 @@ const PaymentSuccessful = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <AntDesign name="arrowleft" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Successful!</Text>
-      </View>
-
       {/* Check Mark Icon */}
-      <AntDesign name="checkcircle" size={80} color="#4CAF50" style={styles.checkMark} />
+      <AntDesign name="checkcircle" size={100} color="#CDFF57" style={styles.checkMark} />
+
+      <Text style={styles.successMessage}>Payment Successful!</Text>
 
       {/* Transaction Details */}
-      <View style={styles.transactionDetails}>
+      <View style={styles.transactionDetailsContainer}>
         <Text style={styles.detailsLabel}>Transaction Details</Text>
-        <Text style={styles.detailsText}>{dateTime}</Text>
-        <Text style={styles.detailsText}>Ref: {randomRef}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabelText}>Date & Time:</Text>
+          <Text style={styles.detailValueText}>{dateTime}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabelText}>Reference ID:</Text>
+          <Text style={styles.detailValueText}>{randomRef}</Text>
+        </View>
       </View>
 
       {/* Bill Amount */}
       <View style={styles.billAmountContainer}>
-        <Text style={styles.billAmountLabel}>Bill Amount</Text>
-        <Text style={styles.billAmountValue}>{totalAmount}</Text>
+        <Text style={styles.billAmountLabel}>Total Amount Paid</Text>
+        <Text style={styles.billAmountValue}>₱{totalAmount}</Text>
       </View>
 
       {/* Funds From */}
@@ -62,7 +62,7 @@ const PaymentSuccessful = () => {
       </View>
 
       {/* New Payment Button */}
-      <TouchableOpacity style={styles.newPaymentButton} onPress={() => router.push("/BillsPayment")}>
+      <TouchableOpacity style={styles.newPaymentButton} onPress={() => router.push({ pathname: '/paybills', params: { uid: uid, accountNumber: accountNumber }})}>
         <Text style={styles.newPaymentButtonText}>Make Another Payment</Text>
       </TouchableOpacity>
     </View>
@@ -72,89 +72,108 @@ const PaymentSuccessful = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212",
+    backgroundColor: "#1A1A1A", // Dark background
     padding: 20,
     alignItems: "center",
+    justifyContent: "center", // Center content vertically
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 20,
-  },
-  backButton: {
-    position: "absolute",
-    left: 0,
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
+  successMessage: {
+    color: "#CDFF57", // Accent color for success message
+    fontSize: 26, // Larger font size
     fontWeight: "bold",
-    flex: 1,
+    marginBottom: 30,
     textAlign: "center",
   },
   checkMark: {
     marginVertical: 20,
   },
-  transactionDetails: {
-    backgroundColor: "#1E1E1E",
-    borderRadius: 10,
-    padding: 15,
+  transactionDetailsContainer: {
+    backgroundColor: "#2A2A2A", // Darker container background
+    borderRadius: 15,
+    padding: 20,
     width: "100%",
-    alignItems: "center",
     marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
   },
   detailsLabel: {
-    color: "#fff",
-    fontSize: 16,
+    color: "#CDFF57",
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 15,
+    textAlign: "center",
   },
-  detailsText: {
-    color: "#ccc",
-    fontSize: 14,
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  detailLabelText: {
+    color: "#D0D0D0",
+    fontSize: 15,
+  },
+  detailValueText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "bold",
   },
   billAmountContainer: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: "#3A3A3A",
+    borderRadius: 15,
+    padding: 20,
     alignItems: "center",
     width: "100%",
-    marginBottom: 20,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: "#CDFF57",
   },
   billAmountLabel: {
-    color: "#fff",
-    fontSize: 16,
+    color: "#CDFF57",
+    fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 10,
   },
   billAmountValue: {
-    color: "#fff",
-    fontSize: 24,
+    color: "#CDFF57",
+    fontSize: 32, // Larger amount
     fontWeight: "bold",
   },
   fundsFrom: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 40, // More space before button
   },
   fundsFromLabel: {
-    color: "#fff",
+    color: "#D0D0D0",
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 8,
   },
   fundsFromText: {
-    color: "#ccc",
+    color: "#A0A0A0",
     fontSize: 14,
   },
   newPaymentButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: "#CDFF57",
+    borderRadius: 12,
+    padding: 18,
     alignItems: "center",
     width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
   },
   newPaymentButtonText: {
-    color: "#fff",
+    color: "#1A1A1A",
     fontWeight: "bold",
     fontSize: 18,
   },

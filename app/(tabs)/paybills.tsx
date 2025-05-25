@@ -44,7 +44,7 @@ const PayBillsScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push({ pathname: '/homepage', params: { uid: uid, accountNumber: accountNumber } })}>
           <Ionicons name="arrow-back" size={24} color="#CDFF57" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pay Bills</Text>
