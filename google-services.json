@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "240194093008",
+    "firebase_url": "https://poweredbank-7c80d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "poweredbank-7c80d",
+    "storage_bucket": "poweredbank-7c80d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240194093008:android:de82f8433ebc6a9d3903d5",
+        "android_client_info": {
+          "package_name": "com.tupm.poweredbank"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8lTDSGr0-ttS59-S2G_TZo2baz8O_6xE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

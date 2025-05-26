@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getFirestore } from "firebase/firestore";
@@ -23,7 +23,11 @@ const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 
+// Set tenantId
+const authForTenant = getAuth(app);
+authForTenant.tenantId = "myTenantId1";
+
 // Firestore Database
 export const db = getFirestore(app);
-export { auth };
+export { auth, authForTenant };
 export default app;
