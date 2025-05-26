@@ -10,7 +10,7 @@ export default function ProfileScreen() {
   const { uid, accountNumber } = useLocalSearchParams();
   const router = useRouter();
   const [isAccountVisible, setIsAccountVisible] = useState(false);
-
+  console.log(uid)
   interface UserData {
     uid?: string;
     name?: string;
@@ -139,7 +139,7 @@ export default function ProfileScreen() {
           style={[styles.navButton, activeTab === "home" && styles.navButtonActive]}
           onPress={() => {
             setActiveTab("home");
-            router.push({ pathname: "/(tabs)/homepage", params: { uid } });
+            router.push({ pathname: "/(tabs)/homepage", params: { uid: uid , accountNumber: accountNumber } });
           }}
         >
           <Ionicons name="home" size={20} color={activeTab === "home" ? "#CDFF57" : "black"} />
@@ -150,7 +150,7 @@ export default function ProfileScreen() {
           style={[styles.navButton, activeTab === "transfer" && styles.navButtonActive]}
           onPress={() => {
             setActiveTab("transfer");
-            router.push({ pathname: "/(tabs)/transferfund", params: { uid } });
+            router.push({ pathname: "/(tabs)/transfer", params: { uid: uid , accountNumber: accountNumber } });
           }}
         >
           <Ionicons name="swap-horizontal" size={20} color={activeTab === "transfer" ? "#CDFF57" : "black"} />
@@ -161,7 +161,7 @@ export default function ProfileScreen() {
           style={[styles.navButton, activeTab === "history" && styles.navButtonActive]}
           onPress={() => {
             setActiveTab("history");
-            router.push({ pathname: "/(tabs)/history", params: { uid } });
+            router.push({ pathname: "/(tabs)/history", params: { uid: uid , accountNumber: accountNumber } });
           }}
         >
           <Ionicons name="document-text" size={20} color={activeTab === "history" ? "#CDFF57" : "black"} />
@@ -172,7 +172,7 @@ export default function ProfileScreen() {
           style={[styles.navButton, activeTab === "profile" && styles.navButtonActive]}
           onPress={() => {
             setActiveTab("profile");
-            router.push({ pathname: "/(tabs)/profile", params: { uid } });
+            router.push({ pathname: "/(tabs)/profile", params: { uid: uid , accountNumber: accountNumber } });
           }}
         >
           <Ionicons name="person" size={20} color={activeTab === "profile" ? "#CDFF57" : "black"} />

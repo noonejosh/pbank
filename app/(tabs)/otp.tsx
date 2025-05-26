@@ -1,78 +1,90 @@
-import { auth } from "@/FirebaseConfig";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { signInWithPhoneNumber } from "firebase/auth";
-import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { signInWithPhoneNumber, PhoneAuthProvider } from "firebase/auth";
+import { auth } from "@/FirebaseConfig"; // Ensure Firebase is correctly initialized
+import { Ionicons } from "@expo/vector-icons";
 
 export default function OTP() {
   const router = useRouter();
-  const { mobile } = useLocalSearchParams(); // Get the mobile number from the previous screen
-  const [otpArray, setOtpArray] = useState(["", "", "", "", "", ""]); // State for OTP input
-  const inputsRef = useRef<TextInput[]>([]); // Refs for OTP input fields
-  const [confirmationResult, setConfirmationResult] = useState<any>(null); // To store the confirmation result
+  const { mobile, uid } = useLocalSearchParams(); // Retrieve mobile number and user ID
+  const [otpArray, setOtpArray] = useState(["", "", "", "", "", ""]); // OTP input state
+  const inputsRef = useRef<TextInput[]>([]); // OTP input field refs
+  const [confirmationResult, setConfirmationResult] = useState<any>(null); // Stores OTP confirmation result
+  const [loading, setLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState(""); // Store generated OTP
 
   useEffect(() => {
-    sendOtp(); // Automatically call sendOtp when the component loads
+    sendOtp();
   }, []);
 
+  // Function to generate and "send" OTP
   const sendOtp = async () => {
-    if (!mobile) {
-      Alert.alert("Error", "Mobile number is missing.");
+    if (!mobile || typeof mobile !== "string" || !mobile.startsWith("+")) {
+      Alert.alert("Error", "Invalid mobile number. Please use E.164 format (e.g., +639XXXXXXXXX).");
       return;
     }
 
+    setLoading(true);
     try {
-      if (typeof mobile === "string") {
-        const confirmationResult = await signInWithPhoneNumber(auth, mobile); // Automatically handles reCAPTCHA
-        setConfirmationResult(confirmationResult); // Save the confirmation result for later verification
-        Alert.alert("Success", "OTP sent to your mobile number.");
-      } else {
-        Alert.alert("Error", "Invalid mobile number format.");
-      }
-      setConfirmationResult(confirmationResult); // Save the confirmation result for later verification
-      Alert.alert("Success", "OTP sent to your mobile number.");
-    } catch (error) {
-      console.error("Error sending OTP:", error);
+      // Generate random 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(otp);
+
+      // Simulate sending OTP (show in alert for demo)
+      Alert.alert("OTP Sent", `Your OTP is: ${otp}`);
+    } catch (error: any) {
+      console.error("Error sending OTP:", error?.message || error);
       Alert.alert("Error", "Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const verifyOtp = async () => {
-    const otp = otpArray.join(""); // Combine the OTP digits into a single string
+  // Combine OTP array into a single string
+  const otpCode = otpArray.join("");
 
-    if (!otp) {
-      Alert.alert("Error", "Please enter the OTP.");
+  // Verify OTP
+  const verifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      setOtpError("Please enter a 6-digit OTP.");
       return;
     }
 
+    setLoading(true);
     try {
-      const result = await confirmationResult.confirm(otp); // Verify the OTP
-      const user = result.user;
-      Alert.alert("Success", "Mobile number verified!");
-      router.push({
-        pathname: "./homepage",
-        params: {
-          uid: user.uid, // Pass the user ID to the homepage
-        },
-      });
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
-      Alert.alert("Error", "Invalid OTP. Please try again.");
+      if (otpCode === generatedOtp) {
+        Alert.alert("Success", "Phone number verified!");
+        router.push({ pathname: "./homepage", params: { uid: uid } });
+      } else {
+        setOtpError("Invalid OTP code. Please try again or resend.");
+      }
+    } catch (error: any) {
+      console.error("Invalid code:", error);
+      setOtpError("Invalid OTP code. Please try again or resend.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity>
+          <Ionicons name="arrow-back" size={24} color="#C6FF00" />
+        </TouchableOpacity>
+      </View>
       <Text style={styles.title}>Enter OTP</Text>
-      <Text style={styles.subtitle}>We have sent a 6-digit code to your mobile: {mobile}</Text>
-
+      <Text style={styles.subtitle}>We have sent a 6-digit code to: {mobile}</Text>
       {/* OTP Input Fields */}
       <View style={styles.otpContainer}>
         {otpArray.map((_, index) => (
           <TextInput
             key={index}
-            ref={(ref) => (inputsRef.current[index] = ref!)} // Assign refs to inputs
-            style={styles.otpInput}
+            ref={(ref) => (inputsRef.current[index] = ref!)}
+            style={[styles.otpInput, otpError && { borderColor: "red" }]}
             maxLength={1}
             keyboardType="numeric"
             value={otpArray[index]}
@@ -80,20 +92,31 @@ export default function OTP() {
               const newOtpArray = [...otpArray];
               newOtpArray[index] = text;
               setOtpArray(newOtpArray);
+              setOtpError("");
 
-              // Move to the next input field
               if (text && index < inputsRef.current.length - 1) {
                 inputsRef.current[index + 1].focus();
+              }
+              if (!text && index > 0) {
+                inputsRef.current[index - 1].focus();
               }
             }}
           />
         ))}
       </View>
 
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={verifyOtp}>
-        <Text style={styles.submitButtonText}>Submit</Text>
-      </TouchableOpacity>
+      {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
+
+      {/* Submit and Resend Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.button, loading && { opacity: 0.5 }]} onPress={verifyOtp} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? "Processing..." : "Submit"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.resendButton} onPress={sendOtp}>
+          <Text style={styles.resendButtonText}>Resend OTP</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -106,6 +129,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  header: {
+    position: "absolute",
+    top: 20,
+    left: 0,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 10,
+    width: "100%",
+  },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -120,7 +153,9 @@ const styles = StyleSheet.create({
   },
   otpContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    alignItems: "center", // Ensures vertical centering
+    width: "100%", // Expands container for proper centering
     marginBottom: 20,
   },
   otpInput: {
@@ -132,17 +167,42 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "black",
     marginHorizontal: 5,
+    borderWidth: 2,
+    borderColor: "white",
   },
-  submitButton: {
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  button: {
     backgroundColor: "#CDFF57",
     borderRadius: 8,
     height: 50,
     justifyContent: "center",
     alignItems: "center",
-    width: "100%",
+    width: "48%",
   },
-  submitButtonText: {
+  buttonText: {
     color: "black",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  resendButton: {
+    backgroundColor: "gray",
+    borderRadius: 8,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "48%",
+  },
+  resendButtonText: {
+    color: "white",
     fontWeight: "bold",
     fontSize: 16,
   },

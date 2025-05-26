@@ -16,7 +16,7 @@ import { db } from '@/FirebaseConfig';
 
 
 const TransactionHistoryScreen = () => {
-  const { uid } = useLocalSearchParams();
+  const { uid, accountNumber } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('history');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -225,7 +225,7 @@ const TransactionHistoryScreen = () => {
             style={[styles.navButton, activeTab === 'home' && styles.navButtonActive]}
             onPress={() => {
               setActiveTab('home');
-              router.push({ pathname: '/(tabs)/homepage', params: { uid } });
+              router.push({ pathname: '/(tabs)/homepage', params: { uid: uid , accountNumber: accountNumber } });
             }}
           >
             <Ionicons
@@ -244,7 +244,7 @@ const TransactionHistoryScreen = () => {
             style={[styles.navButton, activeTab === 'transfer' && styles.navButtonActive]}
             onPress={() => {
               setActiveTab('transfer');
-              router.push({ pathname: '/(tabs)/transfer', params: { uid } });
+              router.push({ pathname: '/(tabs)/transfer', params: { uid: uid , accountNumber: accountNumber } });
             }}
           >
             <Ionicons
@@ -263,7 +263,7 @@ const TransactionHistoryScreen = () => {
             style={[styles.navButton, activeTab === 'history' && styles.navButtonActive]}
             onPress={() => {
               setActiveTab('history');
-              router.push({ pathname: '/(tabs)/history', params: { uid } });
+              router.push({ pathname: '/(tabs)/history', params: { uid: uid , accountNumber: accountNumber } });
             }}
           >
             <Ionicons
@@ -282,7 +282,7 @@ const TransactionHistoryScreen = () => {
             style={[styles.navButton, activeTab === 'profile' && styles.navButtonActive]}
             onPress={() => {
               setActiveTab('profile');
-              router.push({ pathname: '/(tabs)/profile', params: { uid } });
+              router.push({ pathname: '/(tabs)/profile', params: { uid: uid , accountNumber: accountNumber} });
             }}
           >
             <Ionicons

@@ -23,11 +23,8 @@ const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 
-// Set tenantId
-const authForTenant = getAuth(app);
-authForTenant.tenantId = "myTenantId1";
 
 // Firestore Database
 export const db = getFirestore(app);
-export { auth, authForTenant };
+export { auth };
 export default app;

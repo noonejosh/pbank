@@ -169,8 +169,22 @@ export default function SignUp() {
           placeholder="Mobile number linked to Account" 
           placeholderTextColor="gray"
           value={mobile}
-          onChangeText={setMobile}
+          onChangeText={(text) => {
+            // Remove all non-digit characters except +
+            let digits = text.replace(/[^\d]/g, "");
+            // Remove leading zero if present
+            if (digits.startsWith("0")) digits = digits.slice(1);
+            // Only keep the first 10 digits after country code
+            digits = digits.slice(0, 10);
+            // Format: +63 999-999-9999
+            let formatted = "+63";
+            if (digits.length > 0) formatted += " " + digits.slice(0, 3);
+            if (digits.length > 3) formatted += "-" + digits.slice(3, 6);
+            if (digits.length > 6) formatted += "-" + digits.slice(6, 10);
+            setMobile(formatted);
+          }}
           keyboardType="phone-pad"
+          maxLength={16} // +63 999-999-9999 is 16 chars
         />
       </View>
 
