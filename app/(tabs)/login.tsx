@@ -52,7 +52,7 @@ export default function Login() {
           // Navigate to the OTP screen with the mobile number
           router.push({
             pathname: "./otp",
-            params: { mobile, uid: user.uid }, // Pass the mobile number and user ID
+            params: { mobile: mobile, uid: user.uid }, // Pass the mobile number and user ID
           });
         } else {
           Alert.alert("Error", "User data not found in the database.");
